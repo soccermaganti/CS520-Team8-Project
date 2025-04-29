@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { supabase } from './supabaseClient'
 
 export default function Home() {
   return (
