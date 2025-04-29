@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { toast } from "@/components/ui/use-toast"
+import { supabase } from "../supabaseClient"
+
 
 const formSchema = z.object({
   email: z.string().email({
@@ -33,23 +35,34 @@ export default function LoginPage() {
     },
   })
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // In a real application, you would handle login here with proper authentication
-    console.log(values)
-    console.log("User type:", userType)
-
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: values.email,
+      password: values.password,
+    })
+  
+    if (error) {
+      toast({
+        title: "Login failed",
+        description: error.message,
+        variant: "destructive",
+      })
+      return
+    }
+  
     toast({
       title: "Login successful",
-      description: "You have been logged in successfully.",
+      description: `Welcome back, ${values.email}`,
     })
-
-    // Redirect based on user type
+  
+    // Redirect based on user type (optional — you could also check user metadata here)
     if (userType === "patient") {
       router.push("/dashboard/patient")
     } else {
       router.push("/dashboard/doctor")
     }
   }
+  
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-teal-50 to-cyan-50 p-4">

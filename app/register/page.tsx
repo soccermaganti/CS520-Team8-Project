@@ -11,6 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "@/components/ui/use-toast"
+import { supabase } from "../supabaseClient"
 
 const formSchema = z
   .object({
@@ -52,19 +53,46 @@ export default function RegisterPage() {
     },
   })
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // In a real application, you would handle registration here
-    console.log(values)
-    console.log("User type:", userType)
-
-    toast({
-      title: "Registration successful",
-      description: "Your account has been created successfully.",
-    })
-
-    // Redirect to login page
-    router.push("/login")
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          data: {
+            first_name: values.firstName,
+            last_name: values.lastName,
+            phone_number: values.phoneNumber,
+            user_type: userType, // doctor or patient
+          },
+        },
+      })
+  
+      if (error) {
+        toast({
+          title: "Registration failed",
+          description: error.message,
+          variant: "destructive",
+        })
+        return
+      }
+  
+      toast({
+        title: "Registration successful",
+        description: "Please check your email to confirm your account.",
+      })
+  
+      router.push("/login")
+    } catch (err) {
+      console.error(err)
+      toast({
+        title: "An unexpected error occurred",
+        description: "Please try again later.",
+        variant: "destructive",
+      })
+    }
   }
+  
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-teal-50 to-cyan-50 p-4">
