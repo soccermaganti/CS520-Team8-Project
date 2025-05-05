@@ -318,7 +318,7 @@ export default function PatientDashboard() {
                       <Clock className="h-5 w-5 text-teal-600" />
                     </div>
                     <div>
-                      <p className="font-medium">Appointment</p>
+                      <p className="font-medium">{appointment.appt_type}</p>
                       <p className="text-sm text-gray-500">
                         {appointment.appt_date}
                       </p>

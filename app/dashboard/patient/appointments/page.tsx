@@ -87,6 +87,8 @@ export default function AppointmentsPage() {
         doctor_id,
         appt_date: date,
         link: notes || null,
+        appt_time: time,
+        appt_type: type
       },
       
     ])
@@ -110,6 +112,23 @@ export default function AppointmentsPage() {
 
     setLoading(false)
   }
+
+  const handleDelete = async (appt_id) => {
+    const { error } = await supabase
+      .from("Appointment")
+      .delete()
+      .eq("appt_id", appt_id)
+  
+    if (error) {
+      console.error("Delete failed:", error.message)
+      alert("Failed to delete appointment.")
+    } else {
+      // Optionally refetch appointments or update state locally
+      setAppointments((prev) => prev.filter((appt) => appt.appt_id !== appt_id))
+    }
+  }
+  
+
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -255,13 +274,16 @@ export default function AppointmentsPage() {
               ) : (
                 appointments.map((appt, index) => (
                   <div key={index} className="border-b pb-3 last:border-0 last:pb-0">
-                    <p className="font-medium">{formData.type || "Appointment"}</p>
+                    <p className="font-medium">{appt.appt_type}</p>
                     <p className="text-sm text-gray-500 flex items-center gap-1">
                       <Calendar className="h-4 w-4" /> {appt.appt_date}
-                      <Clock className="h-4 w-4 ml-4" /> {formData.time || "—"}
+                      <Clock className="h-4 w-4 ml-4" /> {appt.appt_time || "—"}
                     </p>
-                    <p className="text-sm text-gray-500">Doctor: {formData.doctor || appt.doctor_id}</p>
+                    <p className="text-sm text-gray-500">Doctor: {appt.doctor_id || "-"}</p>
                     {appt.link && <p className="text-sm text-gray-400 mt-1">{appt.link}</p>}
+                    <Button onClick={() => handleDelete(appt.appt_id)}>
+                        Cancel
+                    </Button>
                   </div>
                 ))
               )}
