@@ -42,7 +42,7 @@ export default function AppointmentsPage() {
   })
   const [loading, setLoading] = useState(false)
 
-  // Replace with real authenticated user info
+  // Figure out how to get this from localStorage or from Supabase directly
   const currentPatientId = "66ddd3dd-aa53-4146-b724-47fd54b5607c"
   const doctorIdMap = {
     "Dr. USER2": "uuid-for-user2",
