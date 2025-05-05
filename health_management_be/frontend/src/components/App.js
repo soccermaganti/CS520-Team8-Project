@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { createRoot } from "react-dom/client";
-import HomePage from "./HomePage";
+import Home from "/health_management_frontend/app/page.tsx";
 
 export default class App extends Component {
   constructor(props) {
@@ -8,10 +8,10 @@ export default class App extends Component {
   }
 
   render() {
-    return <HomePage />;
+    return <Home />;
   }
 }
 
 const appDiv = document.getElementById("app");
 const root = createRoot(appDiv); // createRoot(container!) if you use TypeScript
-root.render(<App name="tt"/>);
+root.render(<App />);
