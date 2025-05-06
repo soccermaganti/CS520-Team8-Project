@@ -9,6 +9,7 @@ import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { DatePicker } from "@/components/ui/datepicker"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "@/components/ui/use-toast"
 import { supabase } from "../supabaseClient"
@@ -31,6 +32,7 @@ const formSchema = z
       message: "Password must be at least 8 characters.",
     }),
     confirmPassword: z.string(),
+    dob: z.date().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
@@ -50,6 +52,7 @@ export default function RegisterPage() {
       phoneNumber: "",
       password: "",
       confirmPassword: "",
+      dob: undefined,
     },
   })
 
@@ -64,6 +67,7 @@ export default function RegisterPage() {
             last_name: values.lastName,
             phone_number: values.phoneNumber,
             user_type: userType, // doctor or patient
+            dob: values.dob,
           },
         },
       })
