@@ -159,24 +159,7 @@ export default function DoctorDashboard() {
                     </Tabs>
                   </div>
 
-                  {/* Patient Info */}
-                  <div className="mb-6 flex items-center justify-between">
-                    <div>
-                      <Label className="text-sm font-medium">Patient Name</Label>
-                      <div className="flex mt-1">
-                        <Input className="w-64 mr-2" placeholder="Patient name" />
-                        <Button variant="outline" className="mr-2">
-                          Docs
-                        </Button>
-                        <Button variant="outline">Risks</Button>
-                      </div>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button variant="outline">Save</Button>
-                      <Button variant="outline">Cancel</Button>
-                      <Button variant="outline">Exit</Button>
-                    </div>
-                  </div>
+                  
 
                   {/* Vitals Form */}
                   {activeHorizontalTab === "vitals" && (
@@ -216,39 +199,7 @@ export default function DoctorDashboard() {
                           <Input placeholder="Enter pulse rate" />
                         </div>
 
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between">
-                            <Label className="text-sm font-medium">Apical</Label>
-                            <div className="flex items-center space-x-4">
-                              <div className="flex items-center space-x-2">
-                                <RadioGroup defaultValue="regular">
-                                  <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="regular" id="apical-regular" />
-                                    <Label htmlFor="apical-regular">Regular</Label>
-                                  </div>
-                                </RadioGroup>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <RadioGroup defaultValue="regular">
-                                  <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="irregular" id="apical-irregular" />
-                                    <Label htmlFor="apical-irregular">Irregular</Label>
-                                  </div>
-                                </RadioGroup>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <RadioGroup defaultValue="regular">
-                                  <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="not-answered" id="apical-not-answered" />
-                                    <Label htmlFor="apical-not-answered">Not Answered</Label>
-                                  </div>
-                                </RadioGroup>
-                              </div>
-                            </div>
-                          </div>
-                          <Input placeholder="Enter apical rate" />
-                        </div>
-                      </div>
+                        
 
                       {/* Blood Pressure */}
                       <div>
@@ -373,10 +324,7 @@ export default function DoctorDashboard() {
                           <Label className="text-sm font-medium">Oxygen</Label>
                           <Input className="mt-1" placeholder="Enter oxygen level" />
                         </div>
-                        <div>
-                          <Label className="text-sm font-medium">O2 Saturation</Label>
-                          <Input className="mt-1" placeholder="Enter O2 saturation" />
-                        </div>
+                        
                       </div>
 
                       {/* Blood Sugar */}
