@@ -45,11 +45,17 @@ export default function AppointmentsPage() {
   // Figure out how to get this from localStorage or from Supabase directly
   const currentPatientId = "66ddd3dd-aa53-4146-b724-47fd54b5607c"
   const doctorIdMap = {
-    "Dr. USER2": "uuid-for-user2",
-    "Dr. USER3": "uuid-for-user3",
-    "Dr. Smith": "uuid-for-smith", // Add more mappings as needed,
+    "Dr. Ben Carter": "0781ce8a-6551-4f5f-b700-708335faec09",
+    "Dr. Alice Morgan": "33911418-e56b-423c-bc65-49d99fe4bd09",
+    "Dr. Frank Thompson": "546bd4cf-e035-44a0-8f5e-511a08c0603b",
+    "Dr. Grace Kim": "6847c972-bfa4-46e1-9bfa-b2f0c08fa13b",
+    "Dr. Emma Patel": "8d360888-9f7c-40f7-984f-0a4555a99899",
+    "Dr. Claire Reynolds": "90bb4a38-e922-4d93-9ca5-3c7747819bca",
+    "Dr. Daniel Lee": "e40ccb7b-c91b-4259-8c6c-507cc21fba6f",
+    "Dr. Henry Zhao": "f6116a19-05b5-46d1-a914-a1b2eedaac71",
     "Jim bob": "fb469d05-726e-4678-82f7-2793e6375cab",
-  }
+  };
+  
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -216,13 +222,20 @@ export default function AppointmentsPage() {
                   </div>
                   <div>
                     <Label>Doctor</Label>
-                    <Input
+                    <select
                       name="doctor"
                       value={formData.doctor}
                       onChange={handleChange}
-                      placeholder="e.g., Dr. Smith"
                       required
-                    />
+                      className="w-full border border-gray-300 rounded-md p-2"
+                    >
+                      <option value="">Select a doctor</option>
+                      {Object.keys(doctorIdMap).map((doctorName) => (
+                        <option key={doctorName} value={doctorName}>
+                          {doctorName}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <Label>Date</Label>
