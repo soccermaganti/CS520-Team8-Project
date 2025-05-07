@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import {
   Bell,
@@ -22,6 +22,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 
+import { createClient } from '@supabase/supabase-js'
+
 export default function PatientDashboard() {
   const [currentDate] = useState(
     new Date().toLocaleString("en-US", {
@@ -31,6 +33,7 @@ export default function PatientDashboard() {
       year: "numeric",
     }),
   )
+  const [appointments, setAppointments] = useState([])
 
   // Mock data for the patient
   const patientData = {
@@ -44,29 +47,29 @@ export default function PatientDashboard() {
   }
 
   // Mock data for appointments
-  const appointments = [
-    {
-      type: "Check-up",
-      date: "May 28, 2023",
-      time: "10:30 AM",
-      doctor: "Dr. USER2",
-      location: "Main Hospital, Room 302",
-    },
-    {
-      type: "Blood Test",
-      date: "June 5, 2023",
-      time: "9:00 AM",
-      doctor: "Dr. USER3",
-      location: "Lab Center, Floor 1",
-    },
-    {
-      type: "Physical Therapy",
-      date: "June 12, 2023",
-      time: "2:15 PM",
-      doctor: "Dr. USER4",
-      location: "Rehabilitation Center",
-    },
-  ]
+  // const appointments = [
+  //   {
+  //     type: "Check-up",
+  //     date: "May 28, 2023",
+  //     time: "10:30 AM",
+  //     doctor: "Dr. USER2",
+  //     location: "Main Hospital, Room 302",
+  //   },
+  //   {
+  //     type: "Blood Test",
+  //     date: "June 5, 2023",
+  //     time: "9:00 AM",
+  //     doctor: "Dr. USER3",
+  //     location: "Lab Center, Floor 1",
+  //   },
+  //   {
+  //     type: "Physical Therapy",
+  //     date: "June 12, 2023",
+  //     time: "2:15 PM",
+  //     doctor: "Dr. USER4",
+  //     location: "Rehabilitation Center",
+  //   },
+  // ]
 
   // Health metrics data
   const healthMetrics = {
@@ -129,6 +132,34 @@ export default function PatientDashboard() {
       color: "bg-gray-100",
     },
   ]
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_KEY! // Use this securely server-side
+  )
+
+  // Replace with real authenticated user info
+  const currentPatientId = "66ddd3dd-aa53-4146-b724-47fd54b5607c"
+  const doctorIdMap = {
+    "Dr. USER2": "uuid-for-user2",
+    "Dr. USER3": "uuid-for-user3",
+    "Dr. Smith": "uuid-for-smith", // Add more mappings as needed,
+    "Jim bob": "fb469d05-726e-4678-82f7-2793e6375cab",
+  }
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      const { data, error } = await supabase
+        .from("Appointment")
+        .select("*")
+        .eq("pid", currentPatientId)
+        .order("appt_date", { ascending: true })
+
+      if (!error) setAppointments(data)
+    }
+
+    fetchAppointments()
+  }, [])
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -280,27 +311,32 @@ export default function PatientDashboard() {
                 <CardTitle>Upcoming Appointments</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {appointments.map((appointment, index) => (
-                  <div key={index} className="border-b border-gray-100 pb-3 last:border-0 last:pb-0">
-                    <div className="flex items-start">
-                      <div className="bg-teal-100 p-2 rounded-lg mr-3">
-                        <Clock className="h-5 w-5 text-teal-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{appointment.type}</p>
-                        <p className="text-sm text-gray-500">
-                          {appointment.date} at {appointment.time}
-                        </p>
-                        <p className="text-sm text-gray-500">{appointment.doctor}</p>
-                      </div>
+              {appointments.map((appointment, index) => (
+                <div key={index} className="border-b border-gray-100 pb-3 last:border-0 last:pb-0">
+                  <div className="flex items-start">
+                    <div className="bg-teal-100 p-2 rounded-lg mr-3">
+                      <Clock className="h-5 w-5 text-teal-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{appointment.appt_type}</p>
+                      <p className="text-sm text-gray-500">
+                        {appointment.appt_date}
+                      </p>
+                      <p className="text-sm text-gray-500">Doctor ID: {appointment.doctor_id}</p>
+                      {appointment.link && (
+                        <p className="text-sm text-gray-400 mt-1">{appointment.link}</p>
+                      )}
                     </div>
                   </div>
-                ))}
+                </div>
+              ))}
               </CardContent>
               <CardFooter>
+              <Link href="/dashboard/patient/appointments" className="w-full">
                 <Button variant="outline" className="w-full">
                   View All Appointments
                 </Button>
+              </Link>
               </CardFooter>
             </Card>
           </div>
