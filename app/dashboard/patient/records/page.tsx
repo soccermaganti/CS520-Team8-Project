@@ -35,6 +35,7 @@ export default function MedicalRecordsDashboard() {
   const [records, setRecords] = useState([
     {
       id: "1",
+      recordId: "MR-001",
       date: "03/20/2020",
       name: "Prolactin",
       noteType: "History and Physical",
@@ -42,9 +43,13 @@ export default function MedicalRecordsDashboard() {
       lastUpdated: "04/28/2020",
       updatedBy: "Stephanie Branch",
       fileType: "pdf" as const,
+      fileName: "prolactin_report.pdf",
+      fileSize: "245.32 KB",
+      fileData: null as string | null,
     },
     {
       id: "2",
+      recordId: "MR-002",
       date: "03/29/2020",
       name: "Bilirubin, total",
       noteType: "Cardiology consultation",
@@ -52,9 +57,11 @@ export default function MedicalRecordsDashboard() {
       lastUpdated: "04/29/2020",
       updatedBy: "Stephanie Branch",
       fileType: "png" as const,
+      fileData: null as string | null,
     },
     {
       id: "3",
+      recordId: "MR-003",
       date: "04/20/2020",
       name: "DHEA-sulphate",
       noteType: "History and Physical",
@@ -62,9 +69,11 @@ export default function MedicalRecordsDashboard() {
       lastUpdated: "05/03/2020",
       updatedBy: "Jimmy Sullivan",
       fileType: "pdf" as const,
+      fileData: null as string | null,
     },
     {
       id: "4",
+      recordId: "MR-004",
       date: "05/10/2020",
       name: "Free Urinary Cortisol",
       noteType: "History and Physical",
@@ -72,9 +81,11 @@ export default function MedicalRecordsDashboard() {
       lastUpdated: "05/27/2020",
       updatedBy: "Melissa Melzer",
       fileType: "pdf" as const,
+      fileData: null as string | null,
     },
     {
       id: "5",
+      recordId: "MR-005",
       date: "05/15/2020",
       name: "Alcohol",
       noteType: "History and Physical",
@@ -82,9 +93,11 @@ export default function MedicalRecordsDashboard() {
       lastUpdated: "05/28/2020",
       updatedBy: "Stephanie Branch",
       fileType: "png" as const,
+      fileData: null as string | null,
     },
     {
       id: "6",
+      recordId: "MR-006",
       date: "05/20/2020",
       name: "Globuline",
       noteType: "Cardiology consultation",
@@ -92,15 +105,18 @@ export default function MedicalRecordsDashboard() {
       lastUpdated: "05/28/2020",
       updatedBy: "Cris Velaskez",
       fileType: "pdf" as const,
+      fileData: null as string | null,
     },
   ])
 
   // Form state for new record
   const [newRecord, setNewRecord] = useState({
+    recordId: "",
     name: "",
     noteType: "",
     author: "",
     fileType: "pdf" as "pdf" | "png",
+    file: null as File | null,
   })
 
   const handleSearch = (e: React.FormEvent) => {
@@ -112,32 +128,51 @@ export default function MedicalRecordsDashboard() {
   const handleAddRecord = (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Create a new record with the form data
-    const today = new Date()
-    const formattedDate = format(today, "MM/dd/yyyy")
-
-    const record = {
-      id: (records.length + 1).toString(),
-      date: formattedDate,
-      name: newRecord.name,
-      noteType: newRecord.noteType,
-      author: newRecord.author,
-      lastUpdated: formattedDate,
-      updatedBy: newRecord.author, // In a real app, this would be the current user
-      fileType: newRecord.fileType,
+    if (!newRecord.file) {
+      alert("Please upload a file")
+      return
     }
 
-    // Add the new record to the records array
-    setRecords([...records, record])
+    // Read the file and convert to data URL
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        // Create a new record with the form data
+        const today = new Date()
+        const formattedDate = format(today, "MM/dd/yyyy")
 
-    // Reset the form and close the dialog
-    setNewRecord({
-      name: "",
-      noteType: "",
-      author: "",
-      fileType: "pdf",
-    })
-    setIsAddRecordOpen(false)
+        const record = {
+          id: (records.length + 1).toString(),
+          recordId: newRecord.recordId,
+          date: formattedDate,
+          name: newRecord.name,
+          noteType: newRecord.noteType,
+          author: newRecord.author,
+          lastUpdated: formattedDate,
+          updatedBy: newRecord.author,
+          fileType: newRecord.fileType,
+          fileName: newRecord.file!.name,
+          fileSize: (newRecord.file!.size / 1024).toFixed(2) + " KB",
+          fileData: event.target.result as string,
+        }
+
+        // Add the new record to the records array
+        setRecords([...records, record])
+
+        // Reset the form and close the dialog
+        setNewRecord({
+          recordId: "",
+          name: "",
+          noteType: "",
+          author: "",
+          fileType: "pdf",
+          file: null,
+        })
+        setIsAddRecordOpen(false)
+      }
+    }
+
+    reader.readAsDataURL(newRecord.file)
   }
 
   return (
@@ -256,27 +291,46 @@ export default function MedicalRecordsDashboard() {
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="border-b border-gray-200">
+                      <th className="text-left py-3 px-4 font-medium text-gray-700">Record ID</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-700">Date</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-700">Name</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-700">Note Type</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-700">Author</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-700">Last Updated</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-700">Last Updated by</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-700">File</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-700">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {records.map((record) => (
                       <tr key={record.id} className="border-b border-gray-200 hover:bg-gray-50">
+                        <td className="py-3 px-4 font-medium">{record.recordId}</td>
                         <td className="py-3 px-4">{record.date}</td>
-                        <td className="py-3 px-4 font-medium">{record.name}</td>
+                        <td className="py-3 px-4">{record.name}</td>
                         <td className="py-3 px-4">{record.noteType}</td>
                         <td className="py-3 px-4">{record.author}</td>
                         <td className="py-3 px-4">{record.lastUpdated}</td>
                         <td className="py-3 px-4">{record.updatedBy}</td>
                         <td className="py-3 px-4">
+                          {record.fileName ? (
+                            <span className="text-sm text-gray-600">
+                              {record.fileName} ({record.fileSize})
+                            </span>
+                          ) : (
+                            <span className="text-sm text-gray-400">No file</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
-                            <Button variant="outline" size="sm" onClick={() => handleDownload(record)}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDownload(record)}
+                              disabled={!record.fileData}
+                              className={!record.fileData ? "cursor-not-allowed opacity-50" : ""}
+                              title={!record.fileData ? "No file available" : "Download file"}
+                            >
                               <Download className="h-4 w-4 mr-1" />
                               Download
                             </Button>
@@ -305,67 +359,134 @@ export default function MedicalRecordsDashboard() {
 
       {/* Add Record Dialog */}
       <Dialog open={isAddRecordOpen} onOpenChange={setIsAddRecordOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[550px]">
           <DialogHeader>
-            <DialogTitle>Add New Medical Record</DialogTitle>
+            <DialogTitle className="text-xl font-semibold text-center">Add New Medical Record</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleAddRecord}>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                  Name
-                </Label>
-                <Input
-                  id="name"
-                  value={newRecord.name}
-                  onChange={(e) => setNewRecord({ ...newRecord, name: e.target.value })}
-                  className="col-span-3"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="noteType" className="text-right">
-                  Note Type
-                </Label>
-                <Input
-                  id="noteType"
-                  value={newRecord.noteType}
-                  onChange={(e) => setNewRecord({ ...newRecord, noteType: e.target.value })}
-                  className="col-span-3"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="author" className="text-right">
-                  Author
-                </Label>
-                <Input
-                  id="author"
-                  value={newRecord.author}
-                  onChange={(e) => setNewRecord({ ...newRecord, author: e.target.value })}
-                  className="col-span-3"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right">File Type</Label>
-                <RadioGroup
-                  value={newRecord.fileType}
-                  onValueChange={(value: "pdf" | "png") => setNewRecord({ ...newRecord, fileType: value })}
-                  className="col-span-3 flex gap-4"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="pdf" id="pdf" />
-                    <Label htmlFor="pdf">PDF</Label>
+          <form onSubmit={handleAddRecord} className="mt-2">
+            <div className="space-y-5">
+              <fieldset className="border rounded-md p-4 bg-gray-50">
+                <legend className="text-sm font-medium px-2">Record Information</legend>
+
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <Label htmlFor="recordId" className="w-24 text-right flex-shrink-0">
+                      Record ID <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="recordId"
+                      value={newRecord.recordId}
+                      onChange={(e) => setNewRecord({ ...newRecord, recordId: e.target.value })}
+                      className="flex-1"
+                      placeholder="e.g. MR-007"
+                      required
+                    />
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="png" id="png" />
-                    <Label htmlFor="png">PNG</Label>
+
+                  <div className="flex items-center gap-3">
+                    <Label htmlFor="name" className="w-24 text-right flex-shrink-0">
+                      Name <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="name"
+                      value={newRecord.name}
+                      onChange={(e) => setNewRecord({ ...newRecord, name: e.target.value })}
+                      className="flex-1"
+                      placeholder="Record name"
+                      required
+                    />
                   </div>
-                </RadioGroup>
+
+                  <div className="flex items-center gap-3">
+                    <Label htmlFor="noteType" className="w-24 text-right flex-shrink-0">
+                      Note Type <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="noteType"
+                      value={newRecord.noteType}
+                      onChange={(e) => setNewRecord({ ...newRecord, noteType: e.target.value })}
+                      className="flex-1"
+                      placeholder="e.g. History and Physical"
+                      required
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <Label htmlFor="author" className="w-24 text-right flex-shrink-0">
+                      Author <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="author"
+                      value={newRecord.author}
+                      onChange={(e) => setNewRecord({ ...newRecord, author: e.target.value })}
+                      className="flex-1"
+                      placeholder="Doctor name"
+                      required
+                    />
+                  </div>
+                </div>
+              </fieldset>
+
+              <fieldset className="border rounded-md p-4 bg-gray-50">
+                <legend className="text-sm font-medium px-2">File Information</legend>
+
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <Label className="w-24 text-right flex-shrink-0">
+                      File Type <span className="text-red-500">*</span>
+                    </Label>
+                    <RadioGroup
+                      value={newRecord.fileType}
+                      onValueChange={(value: "pdf" | "png") => {
+                        setNewRecord({ ...newRecord, fileType: value, file: null })
+                        // Reset the file input when changing file type
+                        const fileInput = document.getElementById("file") as HTMLInputElement
+                        if (fileInput) fileInput.value = ""
+                      }}
+                      className="flex gap-6"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="pdf" id="pdf" />
+                        <Label htmlFor="pdf">PDF</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="png" id="png" />
+                        <Label htmlFor="png">PNG</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <Label htmlFor="file" className="w-24 text-right flex-shrink-0 mt-2">
+                      Upload <span className="text-red-500">*</span>
+                    </Label>
+                    <div className="flex-1">
+                      <Input
+                        id="file"
+                        type="file"
+                        accept={newRecord.fileType === "pdf" ? ".pdf" : ".png,.jpg,.jpeg"}
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            setNewRecord({ ...newRecord, file: e.target.files[0] })
+                          }
+                        }}
+                        className="w-full"
+                        required
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Upload a {newRecord.fileType === "pdf" ? "PDF document" : "PNG image"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </fieldset>
+
+              <div className="text-xs text-gray-500 text-right">
+                <span className="text-red-500">*</span> Required fields
               </div>
             </div>
-            <DialogFooter>
+
+            <DialogFooter className="mt-6 gap-2">
               <Button type="button" variant="outline" onClick={() => setIsAddRecordOpen(false)}>
                 Cancel
               </Button>
@@ -387,8 +508,25 @@ function handleDownload(record: {
   author: string
   noteType: string
   fileType: "pdf" | "png"
+  fileName?: string
+  fileSize?: string
+  fileData?: string | null
+  recordId?: string
 }) {
-  // Create a dummy file for download based on the file type
+  // If we have actual file data, use it for download
+  if (record.fileData) {
+    const a = document.createElement("a")
+    a.href = record.fileData
+    a.download =
+      record.fileName ||
+      `${record.recordId || ""}_${record.name.replace(/\s+/g, "_")}_${record.date.replace(/\//g, "-")}.${record.fileType}`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    return
+  }
+
+  // Fallback to generating dummy files for existing records without fileData
   if (record.fileType === "pdf") {
     // Create a simple PDF-like data URL
     const pdfContent = `
@@ -453,7 +591,7 @@ function handleDownload(record: {
     // Create a temporary link and trigger the download
     const a = document.createElement("a")
     a.href = url
-    a.download = `${record.name.replace(/\s+/g, "_")}_${record.date.replace(/\//g, "-")}.pdf`
+    a.download = `${record.recordId || ""}_${record.name.replace(/\s+/g, "_")}_${record.date.replace(/\//g, "-")}.pdf`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -479,15 +617,16 @@ function handleDownload(record: {
       ctx.font = "24px Arial"
       ctx.fillText(`Medical Record: ${record.name}`, 50, 150)
       ctx.font = "18px Arial"
-      ctx.fillText(`Date: ${record.date}`, 50, 200)
-      ctx.fillText(`Author: ${record.author}`, 50, 240)
+      ctx.fillText(`Record ID: ${record.recordId || "N/A"}`, 50, 190)
+      ctx.fillText(`Date: ${record.date}`, 50, 220)
+      ctx.fillText(`Author: ${record.author}`, 50, 250)
       ctx.fillText(`Note Type: ${record.noteType}`, 50, 280)
 
       // Convert to data URL and download
       const dataUrl = canvas.toDataURL("image/png")
       const a = document.createElement("a")
       a.href = dataUrl
-      a.download = `${record.name.replace(/\s+/g, "_")}_${record.date.replace(/\//g, "-")}.png`
+      a.download = `${record.recordId || ""}_${record.name.replace(/\s+/g, "_")}_${record.date.replace(/\//g, "-")}.png`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)

@@ -271,7 +271,7 @@ export default function MedicalRecordsDashboard() {
                       <th className="text-left py-3 px-4 font-medium text-gray-700">Date</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-700">Name</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-700">Note Type</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-700">Patient Name</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-700">Updated by</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-700">Last Updated</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-700">Last Updated by</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-700">File</th>
