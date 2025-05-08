@@ -47,18 +47,7 @@ const formSchema = z
     phoneNumber: z.string().min(10, {
       message: "Phone number must be at least 10 digits.",
     }),
-    dateOfBirth: z
-      .date({
-        required_error: "Date of birth is required.",
-      })
-      .refine(
-        (date) => {
-          // Ensure the date is not in the future
-          return date <= new Date()
-        },
-        {
-          message: "Date of birth cannot be in the future",
-        }),
+    
     password: z.string().min(8, {
       message: "Password must be at least 8 characters.",
     }),
@@ -96,7 +85,7 @@ export default function RegisterPage() {
             first_name: values.firstName,
             last_name: values.lastName,
             phone_number: values.phoneNumber,
-            date_of_birth: values.dateOfBirth ? values.dateOfBirth.toISOString() : null,
+            
             user_type: userType, // doctor or patient
           },
         },
@@ -224,45 +213,6 @@ export default function RegisterPage() {
                 />
               </div>
 
-              {userType === "patient" && (
-                <div className="grid gap-4">
-                  <FormField
-                    control={form.control}
-                    name="dateOfBirth"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Date of Birth*</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant="outline"
-                                className={cn(
-                                  "w-full pl-3 text-left font-normal",
-                                  !field.value && "text-muted-foreground",
-                                )}
-                              >
-                                {field.value ? format(field.value, "PPP") : <span>Select your date of birth</span>}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              disabled={(date) => date > new Date()}
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              )}
 
               <div className="grid gap-4 md:grid-cols-2">
                 <FormField
