@@ -6,7 +6,7 @@ import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Button } from "@/health_management_be/frontend/health_management_frontend/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -14,15 +14,14 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/health_management_be/frontend/health_management_frontend/components/ui/form";
-import { Input } from "@/health_management_be/frontend/health_management_frontend/components/ui/input";
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-} from "@/health_management_be/frontend/health_management_frontend/components/ui/tabs";
-import { toast } from "@/health_management_be/frontend/health_management_frontend/components/ui/use-toast";
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+// import { DatePicker } from "@/components/ui/datepicker";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "@/components/ui/use-toast";
 import { supabase } from "../supabaseClient";
+import localHost from "../localHost";
+import getCookie from "../getCookie";
 
 const formSchema = z
   .object({
@@ -42,6 +41,7 @@ const formSchema = z
       message: "Password must be at least 8 characters.",
     }),
     confirmPassword: z.string(),
+    dob: z.date().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
@@ -61,6 +61,7 @@ export default function RegisterPage() {
       phoneNumber: "",
       password: "",
       confirmPassword: "",
+      dob: undefined,
     },
   });
 
@@ -75,6 +76,8 @@ export default function RegisterPage() {
             last_name: values.lastName,
             phone_number: values.phoneNumber,
             user_type: userType, // doctor or patient
+            // dob: values.dob,
+            dob: "2025-5-7",
           },
         },
       });
@@ -87,7 +90,60 @@ export default function RegisterPage() {
         });
         return;
       }
+      if (userType === "patient"){
+        const response = await fetch(`${localHost}/create_${userType}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie("csrftoken") || "",
+          },
+          body: JSON.stringify({
+            // pid: String(data.user.id),
+            name: `${values.firstName} ${values.lastName}`,
+            email: values.email,
+            phone_num: values.phoneNumber,
+            // dob: values.dob,
+            dob: "2025-5-7"
+          }),
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          toast({
+            title: "Registration failed",
+            description: errorData.message,
+            variant: "destructive",
+          });
+          return;
+        }  
+      }
+      else{
+        const response = await fetch(`${localHost}/create_${userType}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie("csrftoken") || "",
+          },
+          body: JSON.stringify({
+            specialty: "filler",
+            name: `${values.firstName} ${values.lastName}`,
+            email: values.email,
+            phone_num: values.phoneNumber,
+            // // dob: values.dob,
+            // dob: "2025-5-7"
 
+          }),
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          toast({
+            title: "Registration failed",
+            description: errorData.message,
+            variant: "destructive",
+          });
+          return;
+        }  
+      }
+      
       toast({
         title: "Registration successful",
         description: "Please check your email to confirm your account.",
