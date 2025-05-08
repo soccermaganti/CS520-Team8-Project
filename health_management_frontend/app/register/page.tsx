@@ -37,6 +37,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const [userType, setUserType] = useState("patient");
   
+  
 const formSchema = z
   .object({
     firstName: z.string().min(2, {
