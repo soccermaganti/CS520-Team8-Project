@@ -33,6 +33,10 @@ import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 
+export default function RegisterPage() {
+  const router = useRouter();
+  const [userType, setUserType] = useState("patient");
+  
 const formSchema = z
   .object({
     firstName: z.string().min(2, {
@@ -61,27 +65,27 @@ const formSchema = z
   .refine(
       (data) => {
         if (userType === "patient") {
-          return !!data.dob
+          return !!data.dob;
         }
-        return true
+        return true;
       },
       {
         message: "Date of birth is required for patients",
         path: ["dob"],
-      },
-    )
-  .refine(
-    (data) => {
-      if (userType === "doctor") {
-        return !!data.speciality
       }
-      return true
-    },
-    {
-      message: "Speciality is required for doctors",
-      path: ["speciality"],
-    },
-  )
+    )
+    .refine(
+      (data) => {
+        if (userType === "doctor") {
+          return !!data.speciality;
+        }
+        return true;
+      },
+      {
+        message: "Speciality is required for doctors",
+        path: ["speciality"],
+      }
+    );
 
 
 export default function RegisterPage() {
@@ -100,7 +104,7 @@ export default function RegisterPage() {
       dob: "",
       speciality: "",
     },
-  })
+  });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
@@ -118,11 +122,7 @@ export default function RegisterPage() {
         },
       }
                                                         
-      if (userType === "patient") {
-        userData.dob = values.dob
-      } else {
-        userData.speciality = values.speciality
-      });
+    
       
       if (error) {
         toast({
