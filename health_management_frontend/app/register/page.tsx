@@ -100,11 +100,7 @@ export default function RegisterPage() {
       dob: "",
       speciality: "",
     },
-  }if (userType === "patient") {
-      userData.dob = values.dob;
-    } else {
-      userData.speciality = values.speciality;
-    });
+  })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
