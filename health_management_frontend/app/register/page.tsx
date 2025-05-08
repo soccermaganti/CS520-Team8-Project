@@ -47,7 +47,8 @@ const formSchema = z
     phoneNumber: z.string().min(10, {
       message: "Phone number must be at least 10 digits.",
     }),
-    
+    dob: z.string().optional(),
+    speciality: z.string().optional(),
     password: z.string().min(8, {
       message: "Password must be at least 8 characters.",
     }),
@@ -56,7 +57,32 @@ const formSchema = z
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
     path: ["confirmPassword"],
-  });
+  })
+  .refine(
+      (data) => {
+        if (userType === "patient") {
+          return !!data.dob
+        }
+        return true
+      },
+      {
+        message: "Date of birth is required for patients",
+        path: ["dob"],
+      },
+    )
+  .refine(
+    (data) => {
+      if (userType === "doctor") {
+        return !!data.speciality
+      }
+      return true
+    },
+    {
+      message: "Speciality is required for doctors",
+      path: ["speciality"],
+    },
+  )
+
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -71,9 +97,14 @@ export default function RegisterPage() {
       phoneNumber: "",
       password: "",
       confirmPassword: "",
-      dateOfBirth: undefined,
+      dob: "",
+      speciality: "",
     },
-  });
+  }if (userType === "patient") {
+      userData.dob = values.dob;
+    } else {
+      userData.speciality = values.speciality;
+    });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
@@ -89,8 +120,14 @@ export default function RegisterPage() {
             user_type: userType, // doctor or patient
           },
         },
+      }
+                                                        
+      if (userType === "patient") {
+        userData.dob = values.dob
+      } else {
+        userData.speciality = values.speciality
       });
-
+      
       if (error) {
         toast({
           title: "Registration failed",
@@ -212,6 +249,36 @@ export default function RegisterPage() {
                   )}
                 />
               </div>
+
+              {userType === "patient" ? (
+                <FormField
+                  control={form.control}
+                  name="dob"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Date of Birth* (YYYY-MM-DD)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="1990-01-01" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ) : (
+                <FormField
+                  control={form.control}
+                  name="speciality"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Medical Speciality*</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., Cardiology, Pediatrics, etc." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
 
               <div className="grid gap-4 md:grid-cols-2">
