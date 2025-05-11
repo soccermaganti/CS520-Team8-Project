@@ -23,6 +23,39 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 
 import { createClient } from '@supabase/supabase-js'
+import { User as SupabaseUser } from '@supabase/supabase-js'
+
+interface Appointment {
+  appt_id: string;
+  appt_type: string;
+  appt_date: string;
+  appt_time: string;
+  doctor_email: string;
+  patient_email: string;
+  link?: string;
+}
+
+interface NavItemProps {
+  href: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+  active?: boolean;
+}
+
+interface MetricItemProps {
+  label: string;
+  value: string;
+  icon: React.ReactNode;
+}
+
+interface ActivityItemProps {
+  title: string;
+  description: string;
+  time: string;
+  icon: React.ReactNode;
+  iconBg: string;
+  iconColor: string;
+}
 
 export default function PatientDashboard() {
   const [currentDate] = useState(
@@ -33,8 +66,8 @@ export default function PatientDashboard() {
       year: "numeric",
     }),
   )
-  const [appointments, setAppointments] = useState([])
-  const [currentUser, setCurrentUser] = useState(null);
+  const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [currentUser, setCurrentUser] = useState<SupabaseUser | null>(null);
 
   // Mock data for the patient
   const patientData = {
@@ -141,14 +174,14 @@ export default function PatientDashboard() {
 
   // Replace with real authenticated user info
   // const currentPatientId = "66ddd3dd-aa53-4146-b724-47fd54b5607c"
-  useEffect(() => {
-    const fetchUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setCurrentUser(user);
-    };
+  // useEffect(() => {
+  //   const fetchUser = async () => {
+  //     const { data: { user } } = await supabase.auth.getUser();
+  //     setCurrentUser(user);
+  //   };
 
-    fetchUser();
-  }, []);
+  //   fetchUser();
+  // }, []);
   const doctorIdMap = {
     "Dr. USER2": "uuid-for-user2",
     "Dr. USER3": "uuid-for-user3",
@@ -157,18 +190,26 @@ export default function PatientDashboard() {
   }
 
   useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user);
+    };
+
     const fetchAppointments = async () => {
-      const { data, error } = await supabase
-        .from("Appointment")
-        .select("*")
-        .eq("pid", currentPatientId)
-        .order("appt_date", { ascending: true })
+      if (currentUser?.email) {
+        const { data, error } = await supabase
+          .from("Appointment")
+          .select("*")
+          .eq("patient_email", currentUser.email)
+          .order("appt_date", { ascending: true })
 
-      if (!error) setAppointments(data)
+        if (!error) setAppointments(data)
+      }
     }
-
+    
+    fetchUser();
     fetchAppointments()
-  }, [])
+  }, [currentUser])
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -314,8 +355,8 @@ export default function PatientDashboard() {
               </CardContent>
             </Card>
 
-            {/* Upcoming Appointments */}
-            <Card>
+             {/* Upcoming Appointments */}
+             <Card>
               <CardHeader className="pb-2">
                 <CardTitle>Upcoming Appointments</CardTitle>
               </CardHeader>
@@ -331,7 +372,7 @@ export default function PatientDashboard() {
                       <p className="text-sm text-gray-500">
                         {appointment.appt_date}
                       </p>
-                      <p className="text-sm text-gray-500">Doctor ID: {appointment.doctor_id}</p>
+                      <p className="text-sm text-gray-500">Doctor: {appointment.doctor_email}</p>
                       {appointment.link && (
                         <p className="text-sm text-gray-400 mt-1">{appointment.link}</p>
                       )}
@@ -419,7 +460,7 @@ export default function PatientDashboard() {
 }
 
 // Helper components
-function NavItem({ href, icon, children, active = false }) {
+function NavItem({ href, icon, children, active = false }: NavItemProps) {
   return (
     <Link
       href={href}
@@ -435,30 +476,28 @@ function NavItem({ href, icon, children, active = false }) {
   )
 }
 
-function MetricItem({ label, value, icon }) {
+function MetricItem({ label, value, icon }: MetricItemProps) {
   return (
-    <div className="bg-gray-50 p-3 rounded-lg">
-      <div className="flex items-center mb-1">
-        {icon}
-        <span className="text-xs text-gray-500 ml-1">{label}</span>
+    <div className="flex items-center space-x-3">
+      <div className="p-2 bg-gray-100 rounded-lg">{icon}</div>
+      <div>
+        <p className="text-sm text-gray-500">{label}</p>
+        <p className="text-lg font-semibold">{value}</p>
       </div>
-      <p className="text-lg font-semibold">{value}</p>
     </div>
   )
 }
 
-function ActivityItem({ title, description, time, icon, iconBg, iconColor }) {
+function ActivityItem({ title, description, time, icon, iconBg, iconColor }: ActivityItemProps) {
   return (
-    <div className="flex items-start">
-      <div className={`${iconBg} p-2 rounded-lg mr-3`}>
-        <div className={iconColor}>{icon}</div>
+    <div className="flex items-start space-x-3">
+      <div className={`p-2 rounded-lg ${iconBg}`}>
+        <span className={iconColor}>{icon}</span>
       </div>
-      <div className="flex-1">
-        <div className="flex justify-between items-start">
-          <p className="font-medium">{title}</p>
-          <span className="text-xs text-gray-500">{time}</span>
-        </div>
-        <p className="text-sm text-gray-600">{description}</p>
+      <div>
+        <p className="font-medium">{title}</p>
+        <p className="text-sm text-gray-500">{description}</p>
+        <p className="text-xs text-gray-400">{time}</p>
       </div>
     </div>
   )
