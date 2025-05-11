@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { Button } from "@/health_management_be/frontend/health_management_frontend/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -15,9 +15,9 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/health_management_be/frontend/health_management_frontend/components/ui/form";
-import { Input } from "@/health_management_be/frontend/health_management_frontend/components/ui/input";
-import { toast } from "@/health_management_be/frontend/health_management_frontend/components/ui/use-toast";
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { toast } from "@/components/ui/use-toast";
 import { supabase } from "../supabaseClient";
 
 const formSchema = z.object({

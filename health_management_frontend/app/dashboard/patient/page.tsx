@@ -1,7 +1,7 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import Link from "next/link";
+import { useState, useEffect } from "react"
+import Link from "next/link"
 import {
   Bell,
   Calendar,
@@ -17,19 +17,12 @@ import {
   Clipboard,
   MessageSquare,
   Home,
-} from "lucide-react";
-import {
-  Avatar,
-  AvatarFallback,
-} from "@/health_management_be/frontend/health_management_frontend/components/ui/avatar";
-import { Button } from "@/health_management_be/frontend/health_management_frontend/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from "@/health_management_be/frontend/health_management_frontend/components/ui/card";
+} from "lucide-react"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
+
+import { createClient } from '@supabase/supabase-js'
 
 export default function PatientDashboard() {
   const [currentDate] = useState(
@@ -38,8 +31,10 @@ export default function PatientDashboard() {
       month: "long",
       day: "numeric",
       year: "numeric",
-    })
-  );
+    }),
+  )
+  const [appointments, setAppointments] = useState([])
+  const [currentUser, setCurrentUser] = useState(null);
 
   // Mock data for the patient
   const patientData = {
@@ -50,32 +45,32 @@ export default function PatientDashboard() {
     weight: "145 lbs",
     nextAppointment: "June 3, 2023 - 10:30 AM",
     doctor: "Dr. USER2",
-  };
+  }
 
   // Mock data for appointments
-  const appointments = [
-    {
-      type: "Check-up",
-      date: "May 28, 2023",
-      time: "10:30 AM",
-      doctor: "Dr. USER2",
-      location: "Main Hospital, Room 302",
-    },
-    {
-      type: "Blood Test",
-      date: "June 5, 2023",
-      time: "9:00 AM",
-      doctor: "Dr. USER3",
-      location: "Lab Center, Floor 1",
-    },
-    {
-      type: "Physical Therapy",
-      date: "June 12, 2023",
-      time: "2:15 PM",
-      doctor: "Dr. USER4",
-      location: "Rehabilitation Center",
-    },
-  ];
+  // const appointments = [
+  //   {
+  //     type: "Check-up",
+  //     date: "May 28, 2023",
+  //     time: "10:30 AM",
+  //     doctor: "Dr. USER2",
+  //     location: "Main Hospital, Room 302",
+  //   },
+  //   {
+  //     type: "Blood Test",
+  //     date: "June 5, 2023",
+  //     time: "9:00 AM",
+  //     doctor: "Dr. USER3",
+  //     location: "Lab Center, Floor 1",
+  //   },
+  //   {
+  //     type: "Physical Therapy",
+  //     date: "June 12, 2023",
+  //     time: "2:15 PM",
+  //     doctor: "Dr. USER4",
+  //     location: "Rehabilitation Center",
+  //   },
+  // ]
 
   // Health metrics data
   const healthMetrics = {
@@ -85,7 +80,7 @@ export default function PatientDashboard() {
     cholesterol: "--",
     temperature: "--",
     oxygenLevel: "--",
-  };
+  }
 
   // Quick access tiles
   const quickAccessTiles = [
@@ -137,7 +132,43 @@ export default function PatientDashboard() {
       link: "/dashboard/patient/settings",
       color: "bg-gray-100",
     },
-  ];
+  ]
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_KEY! // Use this securely server-side
+  )
+
+  // Replace with real authenticated user info
+  // const currentPatientId = "66ddd3dd-aa53-4146-b724-47fd54b5607c"
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user);
+    };
+
+    fetchUser();
+  }, []);
+  const doctorIdMap = {
+    "Dr. USER2": "uuid-for-user2",
+    "Dr. USER3": "uuid-for-user3",
+    "Dr. Smith": "uuid-for-smith", // Add more mappings as needed,
+    "Jim bob": "fb469d05-726e-4678-82f7-2793e6375cab",
+  }
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      const { data, error } = await supabase
+        .from("Appointment")
+        .select("*")
+        .eq("pid", currentPatientId)
+        .order("appt_date", { ascending: true })
+
+      if (!error) setAppointments(data)
+    }
+
+    fetchAppointments()
+  }, [])
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -154,7 +185,7 @@ export default function PatientDashboard() {
               <AvatarFallback>U1</AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-medium">{patientData.name}</p>
+              <p className="font-medium">{currentUser?.email ? currentUser.email : "U"}</p>
               <p className="text-xs text-gray-500">Patient</p>
             </div>
           </div>
@@ -214,9 +245,7 @@ export default function PatientDashboard() {
         {/* Main content */}
         <main className="flex-1 p-6 overflow-auto">
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">
-              Welcome back, {patientData.name}
-            </h2>
+            <h2 className="text-2xl font-bold text-gray-800">Welcome back, {patientData.name}</h2>
           </div>
 
           {/* Top row */}
@@ -232,23 +261,11 @@ export default function PatientDashboard() {
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="text-center">
                         <p className="text-5xl font-bold text-teal-600">87%</p>
-                        <p className="text-sm text-gray-500 mt-1">
-                          Overall Health
-                        </p>
+                        <p className="text-sm text-gray-500 mt-1">Overall Health</p>
                       </div>
                     </div>
-                    <svg
-                      viewBox="0 0 100 100"
-                      className="w-full h-full transform -rotate-90"
-                    >
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r="45"
-                        fill="none"
-                        stroke="#e2e8f0"
-                        strokeWidth="10"
-                      />
+                    <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+                      <circle cx="50" cy="50" r="45" fill="none" stroke="#e2e8f0" strokeWidth="10" />
                       <circle
                         cx="50"
                         cy="50"
@@ -303,48 +320,44 @@ export default function PatientDashboard() {
                 <CardTitle>Upcoming Appointments</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {appointments.map((appointment, index) => (
-                  <div
-                    key={index}
-                    className="border-b border-gray-100 pb-3 last:border-0 last:pb-0"
-                  >
-                    <div className="flex items-start">
-                      <div className="bg-teal-100 p-2 rounded-lg mr-3">
-                        <Clock className="h-5 w-5 text-teal-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{appointment.type}</p>
-                        <p className="text-sm text-gray-500">
-                          {appointment.date} at {appointment.time}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {appointment.doctor}
-                        </p>
-                      </div>
+              {appointments.map((appointment, index) => (
+                <div key={index} className="border-b border-gray-100 pb-3 last:border-0 last:pb-0">
+                  <div className="flex items-start">
+                    <div className="bg-teal-100 p-2 rounded-lg mr-3">
+                      <Clock className="h-5 w-5 text-teal-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{appointment.appt_type}</p>
+                      <p className="text-sm text-gray-500">
+                        {appointment.appt_date}
+                      </p>
+                      <p className="text-sm text-gray-500">Doctor ID: {appointment.doctor_id}</p>
+                      {appointment.link && (
+                        <p className="text-sm text-gray-400 mt-1">{appointment.link}</p>
+                      )}
                     </div>
                   </div>
-                ))}
+                </div>
+              ))}
               </CardContent>
               <CardFooter>
+              <Link href="/dashboard/patient/appointments" className="w-full">
                 <Button variant="outline" className="w-full">
                   View All Appointments
                 </Button>
+              </Link>
               </CardFooter>
             </Card>
           </div>
 
           {/* Quick Access Tiles */}
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">
-            Quick Access
-          </h3>
+          <h3 className="text-xl font-semibold text-gray-800 mb-4">Quick Access</h3>
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             {quickAccessTiles.map((tile, index) => (
               <Link href={tile.link} key={index}>
                 <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
                   <CardContent className="p-6 flex flex-col items-center text-center">
-                    <div className={`${tile.color} p-3 rounded-lg mb-3`}>
-                      {tile.icon}
-                    </div>
+                    <div className={`${tile.color} p-3 rounded-lg mb-3`}>{tile.icon}</div>
                     <h3 className="font-medium">{tile.title}</h3>
                   </CardContent>
                 </Card>
@@ -353,9 +366,7 @@ export default function PatientDashboard() {
           </div>
 
           {/* Recent Activity */}
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">
-            Recent Activity
-          </h3>
+          <h3 className="text-xl font-semibold text-gray-800 mb-4">Recent Activity</h3>
           <Card>
             <CardContent className="p-6">
               <div className="space-y-4">
@@ -404,7 +415,7 @@ export default function PatientDashboard() {
         </footer>
       </div>
     </div>
-  );
+  )
 }
 
 // Helper components
@@ -421,7 +432,7 @@ function NavItem({ href, icon, children, active = false }) {
       <span className="mr-3">{icon}</span>
       {children}
     </Link>
-  );
+  )
 }
 
 function MetricItem({ label, value, icon }) {
@@ -433,7 +444,7 @@ function MetricItem({ label, value, icon }) {
       </div>
       <p className="text-lg font-semibold">{value}</p>
     </div>
-  );
+  )
 }
 
 function ActivityItem({ title, description, time, icon, iconBg, iconColor }) {
@@ -450,5 +461,5 @@ function ActivityItem({ title, description, time, icon, iconBg, iconColor }) {
         <p className="text-sm text-gray-600">{description}</p>
       </div>
     </div>
-  );
+  )
 }
