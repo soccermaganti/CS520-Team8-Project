@@ -9,6 +9,10 @@ import {
   User,
   LogOut,
   Clock,
+  Users,
+  FileText,
+  Clipboard,
+  Settings,
 } from "lucide-react"
 
 import { createClient } from '@supabase/supabase-js'
@@ -87,17 +91,29 @@ export default function DoctorAppointmentsPage() {
 
         <nav className="flex-1 pt-4">
           <div className="space-y-1">
-            <NavItem href="/dashboard/doctor" icon={<Home />}>
-              Dashboard
-            </NavItem>
-            <NavItem href="/dashboard/doctor/profile" icon={<User />}>
+            <NavItem href="/dashboard/doctor" icon={<User />}>
               Profile
             </NavItem>
-            <NavItem href="/dashboard/doctor/appointments" icon={<Calendar />} active>
+            <NavItem href="/dashboard/doctor/appointments" icon={<Calendar />}>
               Appointments
             </NavItem>
+            <NavItem href="/dashboard/doctor/patients" icon={<Users />} active>
+              Patients
+            </NavItem>
+            <NavItem href="/dashboard/doctor/records" icon={<FileText />}>
+              Records
+            </NavItem>
+            <NavItem
+              href="/dashboard/doctor/prescriptions"
+              icon={<Clipboard />}
+            >
+              Prescriptions
+            </NavItem>
           </div>
-          <div className="absolute bottom-0 w-64 border-t border-gray-200">
+          <div className="absolute bottom-0 w-60 border-t border-gray-200">
+            <NavItem href="/dashboard/doctor/settings" icon={<Settings />}>
+              Settings
+            </NavItem>
             <NavItem href="/login" icon={<LogOut />}>
               Log Out
             </NavItem>
@@ -131,7 +147,7 @@ export default function DoctorAppointmentsPage() {
                   <div key={appt.appt_id} className="border-b pb-3 last:border-0 last:pb-0">
                     <p className="font-medium">{appt.appt_type}</p>
                     <p className="text-sm text-gray-500">
-                      Patient: {appt.Patient?.full_name || "N/A"} ({appt.Patient?.email || "N/A"})
+                      Patient: {appt.Patient?.email || "N/A"}
                     </p>
                     <p className="text-sm text-gray-500 flex items-center gap-1">
                       <Calendar className="h-4 w-4" /> {appt.appt_date}

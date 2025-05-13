@@ -182,12 +182,6 @@ export default function PatientDashboard() {
 
   //   fetchUser();
   // }, []);
-  const doctorIdMap = {
-    "Dr. USER2": "uuid-for-user2",
-    "Dr. USER3": "uuid-for-user3",
-    "Dr. Smith": "uuid-for-smith", // Add more mappings as needed,
-    "Jim bob": "fb469d05-726e-4678-82f7-2793e6375cab",
-  }
 
   useEffect(() => {
     const fetchUser = async () => {

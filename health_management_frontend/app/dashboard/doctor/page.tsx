@@ -17,24 +17,24 @@ import {
 import {
   Avatar,
   AvatarFallback,
-} from "@/health_management_be/frontend/health_management_frontend/components/ui/avatar";
-import { Button } from "@/health_management_be/frontend/health_management_frontend/components/ui/button";
+} from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-} from "@/health_management_be/frontend/health_management_frontend/components/ui/card";
-import { Input } from "@/health_management_be/frontend/health_management_frontend/components/ui/input";
-import { Label } from "@/health_management_be/frontend/health_management_frontend/components/ui/label";
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   RadioGroup,
   RadioGroupItem,
-} from "@/health_management_be/frontend/health_management_frontend/components/ui/radio-group";
+} from "@/components/ui/radio-group";
 import {
   Tabs,
   TabsList,
   TabsTrigger,
-} from "@/health_management_be/frontend/health_management_frontend/components/ui/tabs";
-import { Checkbox } from "@/health_management_be/frontend/health_management_frontend/components/ui/checkbox";
+} from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function DoctorDashboard() {
   const [currentDate] = useState(
