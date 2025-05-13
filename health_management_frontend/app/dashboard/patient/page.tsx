@@ -73,7 +73,8 @@ export default function PatientDashboard() {
 
   // Mock data for the patient
   // TODO: Replace with actual data fetching logic
-  const [patient, setPatient] = useState({name: "", email: "", phone_num: ""})
+  // const [patient, setPatient] = useState({name: "", email: "", phone_num: ""})
+  const [patient, setPatient] = useState<{ name: string; email: string; phone_num: string } | null>(null);
   const [patientInfo, setPatientInfo] = useState({
     age: 0,
     blood_type: "",
@@ -83,15 +84,48 @@ export default function PatientDashboard() {
     weight: "",
     temp:0,
   })
+
   useEffect(() => {
-    const currentPatientId = localStorage.getItem("user") || "{}"
-    const parsedID = JSON.parse(currentPatientId)
-    // console.log("Parsed ID:", parsedID)
+    const fetchUser = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        setCurrentUser(user);
+      } catch (err) {
+        console.error("Error fetching user:", err);
+        // setError("Failed to fetch user data");
+      }
+    };
+  
+    fetchUser();
+  }, []);
+
+  useEffect(() => {
+    // const currentPatientId = localStorage.getItem("user") || "{}"
+    // const parsedID = JSON.parse(currentPatientId)
+
+    
+    // const fetchUser = async () => {
+    //   const { data: { user } } = await supabase.auth.getUser();
+    //   setCurrentUser(user);
+    // };
+
+    const fetchAppointments = async () => {
+      if (currentUser?.email) {
+        const { data, error } = await supabase
+          .from("Appointment")
+          .select("*")
+          .eq("patient_email", currentUser.email)
+          .order("appt_date", { ascending: true })
+
+        if (!error) setAppointments(data)
+      }
+    }
+
     const fetchPatientInfo = async () => {
       const { data, error } = await supabase
         .from("Info")
         .select("*")
-        .eq("email", parsedID)
+        .eq("email", currentUser?.email)
         .single()
 
       if (error) {
@@ -103,59 +137,48 @@ export default function PatientDashboard() {
       }
     }
 
-  fetchPatientInfo()
-  }, [])
-  useEffect(() => {
-    const currentPatientId = localStorage.getItem("user") || "{}"
-    const parsedID = JSON.parse(currentPatientId)
-    // console.log("Parsed ID:", parsedID)
     const fetchPatient = async () => {
-      const { data, error } = await supabase
-        .from("Patient")
-        .select("name, email, phone_num")
-        .eq("email", parsedID)
-        .single()
-
-      if (error) {
-        console.error("Error fetching patient:", error)
-      } else {
-        // Set the patient data in state or use it directly
-        console.log("Patient data:", data)
-        setPatient(data)
+      if (!currentUser?.email) {
+        console.log("No user email available yet");
+        return;
       }
-    }
-    fetchPatient()
-  }, [])
-
-  
-  useEffect(() => {
-    const currentPatientId = localStorage.getItem("user") || "{}"
-    const parsedID = JSON.parse(currentPatientId)
-    const fetchAppointments = async () => {
-      const { data, error } = await supabase
-        .from("Appointment")
-        .select("*")
-        .eq("patient_email", parsedID)
-        .order("appt_date", { ascending: true })
-
-      if (!error) {
-        console.log("Appointments data:", data)
-        setAppointments(data)
+    
+      try {
+        const { data, error } = await supabase
+          .from("Patient")
+          .select("name, email, phone_num")
+          .eq("email", currentUser.email)
+          .single();
+    
+        if (error) {
+          console.error("Error fetching patient:", error.message);
+          return;
+        }
+    
+        if (!data) {
+          console.log("No patient data found for email:", currentUser.email);
+          return;
+        }
+    
+        setPatient(data);
+      } catch (err) {
+        console.error("Unexpected error fetching patient:", err);
       }
-    }
-
+    };
+    
     fetchAppointments()
-  }, [])
+    fetchPatientInfo()
+    fetchPatient()
+  }, [currentUser])
 
-  const patientData = {
-    name: patient.name,
-    email: patient.email,
-    phone_num: patient.phone_num,
-    age: patientInfo.age,
-    bloodType: patientInfo.blood_type,
-    nextAppointment: appointments[0],
-    // pid: patient.pid,
-  }
+const patientData = {
+  name: patient?.name || "Patient",
+  email: patient?.email || "",
+  phone_num: patient?.phone_num || "",
+  age: patientInfo.age,
+  bloodType: patientInfo.blood_type,
+  nextAppointment: appointments[0],
+};
   // console.log(appointments)
 
   // Mock data for appointments
@@ -237,75 +260,7 @@ export default function PatientDashboard() {
       link: "/dashboard/patient/records",
       color: "bg-purple-100",
     }
-    // {
-    //   title: "Bills & Payments",
-    //   icon: <CreditCard className="h-6 w-6" />,
-    //   link: "/dashboard/patient/bills",
-    //   color: "bg-yellow-100",
-    // },
-    // {
-    //   title: "Lab Results",
-    //   icon: <Clipboard className="h-6 w-6" />,
-    //   link: "/dashboard/patient/lab-results",
-    //   color: "bg-pink-100",
-    // },
-    // {
-    //   title: "Messages",
-    //   icon: <MessageSquare className="h-6 w-6" />,
-    //   link: "/dashboard/patient/messages",
-    //   color: "bg-indigo-100",
-    // },
-    // {
-    //   title: "Health Tracking",
-    //   icon: <Activity className="h-6 w-6" />,
-    //   link: "/dashboard/patient/health-tracking",
-    //   color: "bg-red-100",
-    // },
-    // {
-    //   title: "Settings",
-    //   icon: <Settings className="h-6 w-6" />,
-    //   link: "/dashboard/patient/settings",
-    //   color: "bg-gray-100",
-    
   ]
-
-  // const supabase = createClient(
-  //   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  //   process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_KEY! // Use this securely server-side
-  // )
-
-  // Replace with real authenticated user info
-  // const currentPatientId = "66ddd3dd-aa53-4146-b724-47fd54b5607c"
-  // useEffect(() => {
-  //   const fetchUser = async () => {
-  //     const { data: { user } } = await supabase.auth.getUser();
-  //     setCurrentUser(user);
-  //   };
-
-  //   fetchUser();
-  // }, []);
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setCurrentUser(user);
-    };
-
-    const fetchAppointments = async () => {
-      if (currentUser?.email) {
-        const { data, error } = await supabase
-          .from("Appointment")
-          .select("*")
-          .eq("patient_email", currentUser.email)
-          .order("appt_date", { ascending: true })
-
-        if (!error) setAppointments(data)
-      }
-    }
-    
-    fetchUser();
-    fetchAppointments()
-  }, [currentUser])
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -467,12 +422,12 @@ export default function PatientDashboard() {
                         <Clock className="h-5 w-5 text-teal-600" />
                       </div>
                       <div>
-                        <p className="font-medium">{appointment.type}</p>
+                        <p className="font-medium">{appointment.appt_type}</p>
                         <p className="text-sm text-gray-500">
-                          {appointment.date} at {appointment.time}
+                          {appointment.appt_date} at {appointment.appt_time}
                         </p>
                         <p className="text-sm text-gray-500">
-                          {appointment.doctor}
+                          {appointment.doctor_email}
                         </p>
                       </div>
                     </div>
