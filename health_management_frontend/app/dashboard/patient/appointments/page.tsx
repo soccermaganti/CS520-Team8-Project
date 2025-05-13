@@ -15,7 +15,6 @@ import {
   Clock,
 } from "lucide-react"
 
-// import { supabase } from "../../../supabaseClient.js"
 import { createClient } from '@supabase/supabase-js'
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -37,29 +36,47 @@ export default function AppointmentsPage() {
     notes: "",
   })
   const [loading, setLoading] = useState(false)
+  const [currentUser, setCurrentUser] = useState(null);
+  const [doctors, setDoctors] = useState([]);
 
-  // Figure out how to get this from localStorage or from Supabase directly
-  const currentPatientId = "66ddd3dd-aa53-4146-b724-47fd54b5607c"
-  const doctorIdMap = {
-    "Dr. USER2": "uuid-for-user2",
-    "Dr. USER3": "uuid-for-user3",
-    "Dr. Smith": "uuid-for-smith", // Add more mappings as needed,
-    "Jim bob": "fb469d05-726e-4678-82f7-2793e6375cab",
-  }
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user);
+    };
+
+    const fetchDoctors = async () => {
+      const { data, error } = await supabase.from("Doctor").select("name, email");
+      if (!error) {
+        const doctorMap: { [key: string]: string } = {};
+        data.forEach(doctor => {
+          doctorMap[doctor.name] = doctor.email;
+        });
+        setDoctors(doctorMap);
+      } else {
+        console.error("Error fetching doctors:", error);
+      }
+    };
+
+    fetchUser();
+    fetchDoctors();
+  }, []);
 
   useEffect(() => {
     const fetchAppointments = async () => {
-      const { data, error } = await supabase
-        .from("Appointment")
-        .select("*")
-        .eq("pid", currentPatientId)
-        .order("appt_date", { ascending: true })
+      if (currentUser?.email) {
+        const { data, error } = await supabase
+          .from("Appointment")
+          .select("*")
+          .eq("patient_email", currentUser.email)
+          .order("appt_date", { ascending: true })
 
-      if (!error) setAppointments(data)
+        if (!error) setAppointments(data)
+      }
     }
 
     fetchAppointments()
-  }, [])
+  }, [currentUser])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -68,9 +85,13 @@ export default function AppointmentsPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (!currentUser?.email) {
+      alert("Patient email not found.");
+      return;
+    }
     const { type, date, time, doctor, notes } = formData
-    const doctor_id = doctorIdMap[doctor] || null
-    if (!doctor_id) {
+    const doctor_email = doctors[doctor] || null
+    if (!doctor_email) {
       alert("Doctor not recognized.")
       return
     }
@@ -79,25 +100,25 @@ export default function AppointmentsPage() {
 
     const { error } = await supabase.from("Appointment").insert([
       {
-        pid: currentPatientId,
-        doctor_id,
+        patient_email: currentUser.email,
+        doctor_email,
         appt_date: date,
         link: notes || null,
         appt_time: time,
         appt_type: type
       },
-      
+
     ])
 
     if (error) {
-        console.error("Insert failed:", error.message, error.details, error.hint)
-        alert("Failed to schedule appointment. Check console for details.")
+      console.error("Insert failed:", error.message, error.details, error.hint)
+      alert("Failed to schedule appointment. Check console for details.")
     } else {
       // Re-fetch after successful insert
       const { data: updated, error: fetchError } = await supabase
         .from("Appointment")
         .select("*")
-        .eq("pid", currentPatientId)
+        .eq("patient_email", currentUser.email)
         .order("appt_date", { ascending: true })
 
       if (!fetchError) {
@@ -114,7 +135,7 @@ export default function AppointmentsPage() {
       .from("Appointment")
       .delete()
       .eq("appt_id", appt_id)
-  
+
     if (error) {
       console.error("Delete failed:", error.message)
       alert("Failed to delete appointment.")
@@ -123,7 +144,6 @@ export default function AppointmentsPage() {
       setAppointments((prev) => prev.filter((appt) => appt.appt_id !== appt_id))
     }
   }
-  
 
 
   return (
@@ -131,16 +151,16 @@ export default function AppointmentsPage() {
       {/* Sidebar */}
       <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
         <div className="p-6 border-b border-gray-200">
-          <h1 className="text-2xl font-bold text-teal-600">MedC</h1>
+          <h1 className="text-2xl font-bold text-teal-600">CentraHealth</h1>
         </div>
 
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center space-x-3">
             <Avatar>
-              <AvatarFallback>U1</AvatarFallback>
+              <AvatarFallback>{currentUser?.email ? currentUser.email.substring(0, 2).toUpperCase() : "U"}</AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-medium">USER1</p>
+              <p className="font-medium">{currentUser?.email || "User"}</p>
               <p className="text-xs text-gray-500">Patient</p>
             </div>
           </div>
@@ -212,13 +232,20 @@ export default function AppointmentsPage() {
                   </div>
                   <div>
                     <Label>Doctor</Label>
-                    <Input
+                    <select
                       name="doctor"
                       value={formData.doctor}
                       onChange={handleChange}
-                      placeholder="e.g., Dr. Smith"
                       required
-                    />
+                      className="w-full border border-gray-300 rounded-md p-2"
+                    >
+                      <option value="">Select a doctor</option>
+                      {Object.keys(doctors).map((doctorName) => (
+                        <option key={doctorName} value={doctorName}>
+                          {doctorName}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <Label>Date</Label>
@@ -275,7 +302,7 @@ export default function AppointmentsPage() {
                       <Calendar className="h-4 w-4" /> {appt.appt_date}
                       <Clock className="h-4 w-4 ml-4" /> {appt.appt_time || "—"}
                     </p>
-                    <p className="text-sm text-gray-500">Doctor: {appt.doctor_id || "-"}</p>
+                    <p className="text-sm text-gray-500">Doctor: {Object.keys(doctors).find(key => doctors[key] === appt.doctor_email) || "-"}</p>
                     {appt.link && <p className="text-sm text-gray-400 mt-1">{appt.link}</p>}
                     <Button onClick={() => handleDelete(appt.appt_id)}>
                         Cancel
@@ -289,7 +316,7 @@ export default function AppointmentsPage() {
 
         <footer className="bg-white border-t border-gray-200 py-4 px-6">
           <p className="text-gray-600 text-sm text-center">
-            © 2025 MedC Hospital Management System. All rights reserved.
+            © 2025 CentraHealth Hospital Management System. All rights reserved.
           </p>
         </footer>
       </div>

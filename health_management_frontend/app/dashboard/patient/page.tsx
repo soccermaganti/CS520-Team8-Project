@@ -1,6 +1,7 @@
 "use client"
+"use client"
 
-import { useState, useEffect, use } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import {
   Bell,
@@ -23,8 +24,40 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 
 import { createClient } from '@supabase/supabase-js'
-
+import { User as SupabaseUser } from '@supabase/supabase-js'
 import { supabase } from "../../supabaseClient";
+
+interface Appointment {
+  appt_id: string;
+  appt_type: string;
+  appt_date: string;
+  appt_time: string;
+  doctor_email: string;
+  patient_email: string;
+  link?: string;
+}
+
+interface NavItemProps {
+  href: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+  active?: boolean;
+}
+
+interface MetricItemProps {
+  label: string;
+  value: string;
+  icon: React.ReactNode;
+}
+
+interface ActivityItemProps {
+  title: string;
+  description: string;
+  time: string;
+  icon: React.ReactNode;
+  iconBg: string;
+  iconColor: string;
+}
 
 export default function PatientDashboard() {
   const [currentDate] = useState(
@@ -35,7 +68,8 @@ export default function PatientDashboard() {
       year: "numeric",
     }),
   )
-  const [appointments, setAppointments] = useState([])
+  const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [currentUser, setCurrentUser] = useState<SupabaseUser | null>(null);
 
   // Mock data for the patient
   // TODO: Replace with actual data fetching logic
@@ -148,6 +182,29 @@ export default function PatientDashboard() {
   //     location: "Rehabilitation Center",
   //   },
   // ]
+  // const appointments = [
+  //   {
+  //     type: "Check-up",
+  //     date: "May 28, 2023",
+  //     time: "10:30 AM",
+  //     doctor: "Dr. USER2",
+  //     location: "Main Hospital, Room 302",
+  //   },
+  //   {
+  //     type: "Blood Test",
+  //     date: "June 5, 2023",
+  //     time: "9:00 AM",
+  //     doctor: "Dr. USER3",
+  //     location: "Lab Center, Floor 1",
+  //   },
+  //   {
+  //     type: "Physical Therapy",
+  //     date: "June 12, 2023",
+  //     time: "2:15 PM",
+  //     doctor: "Dr. USER4",
+  //     location: "Rehabilitation Center",
+  //   },
+  // ]
 
   // Health metrics data
   // TODO: Replace with actual data fetching logic
@@ -179,7 +236,7 @@ export default function PatientDashboard() {
       icon: <FileText className="h-6 w-6" />,
       link: "/dashboard/patient/records",
       color: "bg-purple-100",
-    },
+    }
     // {
     //   title: "Bills & Payments",
     //   icon: <CreditCard className="h-6 w-6" />,
@@ -209,16 +266,46 @@ export default function PatientDashboard() {
     //   icon: <Settings className="h-6 w-6" />,
     //   link: "/dashboard/patient/settings",
     //   color: "bg-gray-100",
-    // },
+    
   ]
 
+  // const supabase = createClient(
+  //   process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  //   process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_KEY! // Use this securely server-side
+  // )
+
   // Replace with real authenticated user info
-  const doctorIdMap = {
-    "Dr. USER2": "uuid-for-user2",
-    "Dr. USER3": "uuid-for-user3",
-    "Dr. Smith": "uuid-for-smith", // Add more mappings as needed,
-    "Jim bob": "fb469d05-726e-4678-82f7-2793e6375cab",
-  }
+  // const currentPatientId = "66ddd3dd-aa53-4146-b724-47fd54b5607c"
+  // useEffect(() => {
+  //   const fetchUser = async () => {
+  //     const { data: { user } } = await supabase.auth.getUser();
+  //     setCurrentUser(user);
+  //   };
+
+  //   fetchUser();
+  // }, []);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user);
+    };
+
+    const fetchAppointments = async () => {
+      if (currentUser?.email) {
+        const { data, error } = await supabase
+          .from("Appointment")
+          .select("*")
+          .eq("patient_email", currentUser.email)
+          .order("appt_date", { ascending: true })
+
+        if (!error) setAppointments(data)
+      }
+    }
+    
+    fetchUser();
+    fetchAppointments()
+  }, [currentUser])
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -235,7 +322,7 @@ export default function PatientDashboard() {
               <AvatarFallback>U1</AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-medium">{patientData.name}</p>
+              <p className="font-medium">{currentUser?.email ? currentUser.email : "U"}</p>
               <p className="text-xs text-gray-500">Patient</p>
             </div>
           </div>
@@ -364,31 +451,33 @@ export default function PatientDashboard() {
               </CardContent>
             </Card>
 
-            {/* Upcoming Appointments */}
-            <Card>
+             {/* Upcoming Appointments */}
+             <Card>
               <CardHeader className="pb-2">
                 <CardTitle>Upcoming Appointments</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-              {appointments.map((appointment, index) => (
-                <div key={index} className="border-b border-gray-100 pb-3 last:border-0 last:pb-0">
-                  <div className="flex items-start">
-                    <div className="bg-teal-100 p-2 rounded-lg mr-3">
-                      <Clock className="h-5 w-5 text-teal-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium">{appointment.appt_type}</p>
-                      <p className="text-sm text-gray-500">
-                        {appointment.appt_date}
-                      </p>
-                      <p className="text-sm text-gray-500">Doctor ID: {appointment.doctor_id}</p>
-                      {appointment.link && (
-                        <p className="text-sm text-gray-400 mt-1">{appointment.link}</p>
-                      )}
+                {appointments.map((appointment, index) => (
+                  <div
+                    key={index}
+                    className="border-b border-gray-100 pb-3 last:border-0 last:pb-0"
+                  >
+                    <div className="flex items-start">
+                      <div className="bg-teal-100 p-2 rounded-lg mr-3">
+                        <Clock className="h-5 w-5 text-teal-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium">{appointment.type}</p>
+                        <p className="text-sm text-gray-500">
+                          {appointment.date} at {appointment.time}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {appointment.doctor}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
               </CardContent>
               <CardFooter>
               <Link href="/dashboard/patient/appointments" className="w-full">
@@ -469,7 +558,7 @@ export default function PatientDashboard() {
 }
 
 // Helper components
-function NavItem({ href, icon, children, active = false }) {
+function NavItem({ href, icon, children, active = false }: NavItemProps) {
   return (
     <Link
       href={href}
@@ -485,30 +574,28 @@ function NavItem({ href, icon, children, active = false }) {
   )
 }
 
-function MetricItem({ label, value, icon }) {
+function MetricItem({ label, value, icon }: MetricItemProps) {
   return (
-    <div className="bg-gray-50 p-3 rounded-lg">
-      <div className="flex items-center mb-1">
-        {icon}
-        <span className="text-xs text-gray-500 ml-1">{label}</span>
+    <div className="flex items-center space-x-3">
+      <div className="p-2 bg-gray-100 rounded-lg">{icon}</div>
+      <div>
+        <p className="text-sm text-gray-500">{label}</p>
+        <p className="text-lg font-semibold">{value}</p>
       </div>
-      <p className="text-lg font-semibold">{value}</p>
     </div>
   )
 }
 
-function ActivityItem({ title, description, time, icon, iconBg, iconColor }) {
+function ActivityItem({ title, description, time, icon, iconBg, iconColor }: ActivityItemProps) {
   return (
-    <div className="flex items-start">
-      <div className={`${iconBg} p-2 rounded-lg mr-3`}>
-        <div className={iconColor}>{icon}</div>
+    <div className="flex items-start space-x-3">
+      <div className={`p-2 rounded-lg ${iconBg}`}>
+        <span className={iconColor}>{icon}</span>
       </div>
-      <div className="flex-1">
-        <div className="flex justify-between items-start">
-          <p className="font-medium">{title}</p>
-          <span className="text-xs text-gray-500">{time}</span>
-        </div>
-        <p className="text-sm text-gray-600">{description}</p>
+      <div>
+        <p className="font-medium">{title}</p>
+        <p className="text-sm text-gray-500">{description}</p>
+        <p className="text-xs text-gray-400">{time}</p>
       </div>
     </div>
   )
