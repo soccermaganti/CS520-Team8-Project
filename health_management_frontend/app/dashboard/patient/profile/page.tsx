@@ -28,6 +28,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "../../../supabaseClient";
 
 const PatientProfilePage = () => {
+  const [currentUser, setCurrentUser] = useState(null);
+    useEffect(() => {
+      const fetchUser = async () => {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        setCurrentUser(user);
+      };
+      fetchUser();
+    },[]);
+
   const [patient, setPatient] = useState({
     name: "",
     email: "",
@@ -97,7 +108,11 @@ const PatientProfilePage = () => {
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center space-x-3">
             <Avatar>
-              <AvatarFallback>U1</AvatarFallback>
+              <AvatarFallback>
+                {currentUser?.email
+                  ? currentUser.email.substring(0, 2).toUpperCase()
+                  : "PT"}
+              </AvatarFallback>
             </Avatar>
             <div>
               <p className="font-medium">{patientData.name}</p>
