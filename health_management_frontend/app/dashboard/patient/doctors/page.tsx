@@ -9,6 +9,7 @@ import {
   Calendar,
   FileText,
   Pill,
+  Clipboard,
   CreditCard,
   Settings,
   LogOut,
@@ -24,12 +25,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "../../../supabaseClient";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_KEY! // Use this securely server-side
-);
-const MedicationsPage = () => {
+
+const DoctorsPage = () => {
   const [patientEmail, setPatientEmail] = useState("");
   useEffect(() => {
     const fetchPatient = async () => {
@@ -43,7 +42,7 @@ const MedicationsPage = () => {
       }
     };
     fetchPatient();
-  }, [patientEmail]);
+  }, []);
   // console.log(`Patient email: ${patientEmail}-${typeof patientEmail}`);
   const [patientName, setPatientName] = useState("");
   useEffect(() => {
@@ -61,65 +60,97 @@ const MedicationsPage = () => {
         console.error("Error fetching patient:", error);
       } else {
         // Set the patient data in state or use it directly
-        console.log("Patient data:", data);
+        console.log("Patient Name:", data);
         setPatientName(data.name);
       }
     };
     fetchPatient();
   }, [patientEmail]);
-  const [activeMeds, setActiveMeds] = useState([]);
-  // const [patient, setPatient] = useState({name: "", email: "", phone_num: ""})
-  // const [patientAge, setPatientAge] = useState(0)
+  const [patientDoctors, setPatientDoctors] = useState([]);
   useEffect(() => {
-    // const currentPatientId = localStorage.getItem("user") || "{}";
-    // const parsedID = JSON.parse(currentPatientId);
-    // console.log("Parsed ID:", parsedID)
-    const fetchActivePrescriptions = async () => {
+    const fetchPatientDoctors = async () => {
       const { data, error } = await supabase
-        .from("Prescription")
+        .from("Patient-Doctor")
         .select("*")
         .eq("patient_email", patientEmail)
-        .gte("exp_date", new Date().toISOString())
-        .order("start_date", { ascending: false });
+        .order("accepted", { ascending: false })
+        .order("doctor_email", {ascending: true});
 
       if (error) {
-        console.error("Error fetching patient:", error);
+        console.error("Error fetching doctors:", error);
       } else {
-        // Set the patient data in state or use it directly
-        console.log("Active Meds data:", data);
-        setActiveMeds(data);
+        // Set the doctor data in state or use it directly
+        console.log("Doctor data:", data);
+        setPatientDoctors(data);
       }
     };
-    fetchActivePrescriptions();
-  }, [patientEmail]);
-  const [expiredMeds, setExpiredMeds] = useState([]);
+    fetchPatientDoctors();
+  }, [patientEmail, ]);
+
+  const [doctors, setDoctors] = useState([]);
   useEffect(() => {
-    // const currentPatientId = localStorage.getItem("user") || "{}";
-    // const parsedID = JSON.parse(currentPatientId);
-    // console.log("Parsed ID:", parsedID)
-    const fetchExpiredPrescriptions = async () => {
+    const fetchDoctors = async () => {
       const { data, error } = await supabase
-        .from("Prescription")
+        .from("Doctor")
+        .select("*")
+        .order("name", { ascending: true });
+
+      if (error) {
+        console.error("Error fetching doctors:", error);
+      } else {
+        // Set the doctor data in state or use it directly
+        console.log("Doctor data:", data);
+        setDoctors(data);
+      }
+    };
+    fetchDoctors();
+  }, [patientEmail]);
+
+  const [selectedDoctor, setSelectedDoctor] = useState("")
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    const patient_email = patientEmail
+    const doctor_email = selectedDoctor.split(',')
+    console.log(`Selected Doctor Info ${doctor_email[0]}`)
+    
+
+    // setLoading(true)
+
+    const { error } = await supabase.from("Patient-Doctor").insert([
+      {
+        patient_email : patient_email,
+        doctor_email: doctor_email[1],
+        accepted: false,
+        patient_name: patientName,
+        doctor_name: doctor_email[0]
+      },
+      
+    ])
+
+    if (error) {
+        console.error("Insert failed:", error.message, error.details, error.hint)
+        alert("Doctor has already been requested for.")
+    } else {
+      // Re-fetch after successful insert
+      const { data, error } = await supabase
+        .from("Patient-Doctor")
         .select("*")
         .eq("patient_email", patientEmail)
-        .lt("exp_date", new Date().toISOString())
-        .order("start_date", { ascending: false });
+        .order("accepted", { ascending: false })
+        .order("doctor_email", {ascending: true});
 
       if (error) {
-        console.error("Error fetching patient:", error);
+        console.error("Error fetching doctors:", error);
       } else {
-        // Set the patient data in state or use it directly
-        console.log("Expired Meds data:", data);
-        setExpiredMeds(data);
+        // Set the doctor data in state or use it directly
+        console.log("Doctor data:", data);
+        setPatientDoctors(data);
       }
-    };
-    fetchExpiredPrescriptions();
-  }, [patientEmail]);
-  // const medications = [
-  //   { id: 1, name: "Medication A", dosage: "10mg", frequency: "Once a day" },
-  //   { id: 2, name: "Medication B", dosage: "20mg", frequency: "Twice a day" },
-  //   { id: 3, name: "Medication C", dosage: "5mg", frequency: "Once a week" },
-  // ];
+    }
+
+  }
+
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -158,13 +189,12 @@ const MedicationsPage = () => {
             <NavItem
               href="/dashboard/patient/medications"
               icon={<Pill />}
-              active
             >
               Medications
             </NavItem>
-            {/* <NavItem href="/dashboard/patient/bills" icon={<CreditCard />}>
-                Bills
-              </NavItem> */}
+            <NavItem href="/dashboard/patient/doctors" icon={<Clipboard />} active>
+                Doctors
+              </NavItem>
           </div>
           <div className="absolute bottom-0 w-64 border-t border-gray-200">
             <NavItem href="/dashboard/patient/settings" icon={<Settings />}>
@@ -186,57 +216,58 @@ const MedicationsPage = () => {
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </Link>
-            <h2 className="text-2xl font-bold text-gray-800">Medications</h2>
+            <h2 className="text-2xl font-bold text-gray-800">Doctors</h2>
           </div>
         </header>
 
         <main className="flex-1 p-6 overflow-auto">
-          {/* Medications View */}
-          <div className="flex space-x-4">
-            <Card className="flex-1">
+          {/* Doctors View */}
+            <div className="space-y-8">
+            <Card>
+                <form onSubmit={handleSubmit} className="space-y-4 p-4">
+                <select
+                id="doctor"
+                className="w-full border border-gray-300 rounded-md p-2"
+                onChange={(e) => setSelectedDoctor(e.target.value)}
+                >
+                <option value="">-- Select a Doctor --</option>
+                {doctors.map((doctor) => (
+                <option key={doctor.email} value={[doctor.name, doctor.email]}>
+                  {doctor.name} ({doctor.email})
+                </option>
+                ))}
+                </select>
+                <Button type="submit" className="bg-teal-600 hover:bg-teal-700 p-2">
+                Request Doctor
+                </Button>
+                </form>
+            </Card>
+            <Card>
               <CardHeader>
-                <CardTitle>Active Prescriptions</CardTitle>
+              <CardTitle>Requested and Assigned Practitioners</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4 max-h-128 overflow-y-auto">
-                  {activeMeds.map((medication) => (
-                    <Card key={medication.pre_id}>
-                      <CardHeader>
-                        <CardTitle>{medication.drug_name}</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p>Dosage: {medication.dosage} mg</p>
-                        <p>Quantity: {medication.quantity}</p>
-                        <p>Expiration Date: {medication.exp_date}</p>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+              <div className="space-y-4 max-h-80 overflow-y-auto">
+                {patientDoctors.map((doctor) => (
+                <Card key={doctor.doctor_email + " " + doctor.patient_email}>
+                  <CardHeader>
+                  <CardTitle>{doctor.doctor_name}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p>{doctor.doctor_email}</p>
+                  {doctor.accepted ? (
+                    <p>Accepted</p>
+                  ) : (
+                    <p>Pending</p>
+                  )}
+                  </CardContent>
+                </Card>
+                ))}
+              </div>
               </CardContent>
             </Card>
-            <Card className="flex-1">
-              <CardHeader>
-                <CardTitle>Expired Prescriptions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4 max-h-128 overflow-y-auto">
-                  {expiredMeds.map((medication) => (
-                    <Card key={medication.pre_id}>
-                      <CardHeader>
-                        <CardTitle>{medication.drug_name}</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p>Dosage: {medication.dosage} mg</p>
-                        <p>Quantity: {medication.quantity}</p>
-                        <p>Expiration Date: {medication.exp_date}</p>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </main>
+            </div>
+          </main>
 
         <footer className="bg-white border-t border-gray-200 py-4 px-6">
           <p className="text-gray-600 text-sm text-center">
@@ -262,4 +293,4 @@ function NavItem({ href, icon, children, active = false }) {
     </Link>
   );
 }
-export default MedicationsPage;
+export default DoctorsPage;

@@ -24,10 +24,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_KEY! // Use this securely server-side
-)
+import { supabase } from "../../../supabaseClient";
 
 export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState([])
@@ -154,7 +151,7 @@ export default function AppointmentsPage() {
       {/* Sidebar */}
       <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
         <div className="p-6 border-b border-gray-200">
-          <h1 className="text-2xl font-bold text-teal-600">MedC</h1>
+          <h1 className="text-2xl font-bold text-teal-600">CentraHealth</h1>
         </div>
 
         <div className="p-4 border-b border-gray-200">
@@ -186,9 +183,9 @@ export default function AppointmentsPage() {
             <NavItem href="/dashboard/patient/medications" icon={<Pill />}>
               Medications
             </NavItem>
-            <NavItem href="/dashboard/patient/bills" icon={<CreditCard />}>
+            {/* <NavItem href="/dashboard/patient/bills" icon={<CreditCard />}>
               Bills
-            </NavItem>
+            </NavItem> */}
           </div>
           <div className="absolute bottom-0 w-64 border-t border-gray-200">
             <NavItem href="/dashboard/patient/settings" icon={<Settings />}>
@@ -319,7 +316,7 @@ export default function AppointmentsPage() {
 
         <footer className="bg-white border-t border-gray-200 py-4 px-6">
           <p className="text-gray-600 text-sm text-center">
-            © 2025 MedC Hospital Management System. All rights reserved.
+            © 2025 CentraHealth Hospital Management System. All rights reserved.
           </p>
         </footer>
       </div>
