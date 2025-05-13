@@ -43,18 +43,22 @@ const formSchema = z
     phoneNumber: z.string().min(10, {
       message: "Phone number must be at least 10 digits.",
     }),
-    dateOfBirth: z
-      .date({
-        required_error: "Date of birth is required.",
-      })
-      .refine(
-        (date) => {
-          // Ensure the date is not in the future
-          return date <= new Date()
-        },
-        {
-          message: "Date of birth cannot be in the future",
-        }),
+    dateOfBirth: z // <--- Modify this section
+    .date({
+      // invalid_type_error: "Please enter a valid date.", // Keep type validation if needed
+    })
+    .nullable() // Allow it to be null
+    .optional() // Make the field optional
+    .refine(
+      (date) => {
+        // This check should only apply if a date is provided
+        if (date === undefined || date === null) return true;
+        return date <= new Date();
+      },
+      {
+        message: "Date of birth cannot be in the future",
+      }
+    ),
     password: z.string().min(8, {
       message: "Password must be at least 8 characters.",
     }),
@@ -108,59 +112,6 @@ export default function RegisterPage() {
           variant: "destructive",
         });
         return;
-      }
-      if (userType === "patient"){
-        const response = await fetch(`${localHost}/create_${userType}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": getCookie("csrftoken") || "",
-          },
-          body: JSON.stringify({
-            // pid: String(data.user.id),
-            name: `${values.firstName} ${values.lastName}`,
-            email: values.email,
-            phone_num: values.phoneNumber,
-            // dob: values.dateOfBirth,
-            dob: "2025-5-7"
-          }),
-        });
-        if (!response.ok) {
-          const errorData = await response.json();
-          toast({
-            title: "Registration failed",
-            description: errorData.message,
-            variant: "destructive",
-          });
-          return;
-        }  
-      }
-      else{
-        const response = await fetch(`${localHost}/create_${userType}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": getCookie("csrftoken") || "",
-          },
-          body: JSON.stringify({
-            specialty: "filler",
-            name: `${values.firstName} ${values.lastName}`,
-            email: values.email,
-            phone_num: values.phoneNumber,
-            // // dob: values.dob,
-            // dob: "2025-5-7"
-
-          }),
-        });
-        if (!response.ok) {
-          const errorData = await response.json();
-          toast({
-            title: "Registration failed",
-            description: errorData.message,
-            variant: "destructive",
-          });
-          return;
-        }  
       }
       
       toast({
