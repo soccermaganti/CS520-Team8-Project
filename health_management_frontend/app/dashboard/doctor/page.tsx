@@ -118,6 +118,7 @@ export default function DoctorDashboard() {
     height: 0.0,
     bpm: 0,
     activity_level: "",
+    blood_pressure: "",
     age: 0,
     email: "",
     temp: 0.0,
@@ -151,11 +152,13 @@ export default function DoctorDashboard() {
       }
     } else {
       // Remove keys with no form values
+      let temp = {}
       Object.keys(formData).forEach((key) => {
-        if (formData[key] === 0 || formData[key] === "") {
-          delete formData[key];
+        if (formData[key] !== 0 || formData[key] !== "") {
+          temp[key] = formData[key];
         }
       });
+      setFormData(temp)
       const { error } = await supabase
         .from("Info")
         .update([formData])
@@ -171,6 +174,7 @@ export default function DoctorDashboard() {
         alert("Unable to process changes");
       } else {
         alert(`Updated metrics for ${selectedPatient.split(",")[0]}`);
+        setFormData({ weight: 0.0, height: 0.0, bpm: 0, activity_level: "", blood_pressure: "", age: 0, email: "", temp: 0.0 });
       }
     }
   };
@@ -256,7 +260,7 @@ export default function DoctorDashboard() {
                     </select>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="height">Height (cm)</Label>
+                        <Label htmlFor="height">Height (ft)</Label>
                         <Input
                           id="height"
                           type="number"
@@ -272,7 +276,7 @@ export default function DoctorDashboard() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="weight">Weight (kg)</Label>
+                        <Label htmlFor="weight">Weight (lbs)</Label>
                         <Input
                           id="weight"
                           type="number"
@@ -283,6 +287,22 @@ export default function DoctorDashboard() {
                             setFormData({
                               ...formData,
                               weight: parseFloat(e.target.value) || 0,
+                            })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="age">Age</Label>
+                        <Input
+                          id="age"
+                          type="number"
+                          placeholder="Enter age"
+                          className="mt-1"
+                          value={formData.age}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              age: parseInt(e.target.value) || 0,
                             })
                           }
                         />
@@ -349,11 +369,11 @@ export default function DoctorDashboard() {
                           step="0.1"
                           placeholder="Enter body temperature"
                           className="mt-1"
-                          value={formData.temperature}
+                          value={formData.temp}
                           onChange={(e) =>
                             setFormData({
                               ...formData,
-                              temperature: parseFloat(e.target.value) || 0,
+                              temp: parseFloat(e.target.value) || 0,
                             })
                           }
                         />
@@ -362,17 +382,6 @@ export default function DoctorDashboard() {
                     <Button
                       type="submit"
                       className="bg-teal-600 hover:bg-teal-700"
-                      onClick={() =>
-                      setFormData({
-                        weight: 0.0,
-                        height: 0.0,
-                        bpm: 0,
-                        activity_level: "",
-                        age: 0,
-                        email: "",
-                        temp: 0.0,
-                      })
-                      }
                     >
                       Submit
                     </Button>
