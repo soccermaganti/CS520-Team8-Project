@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import {
   ArrowLeft,
@@ -28,10 +28,235 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { format } from "date-fns"
+import { createClient } from '@supabase/supabase-js'
+
 
 export default function MedicalRecordsDashboard() {
   const [searchQuery, setSearchQuery] = useState("")
   const [isAddRecordOpen, setIsAddRecordOpen] = useState(false)
+  const [doctors, setDoctors] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+  const supabase = createClient(
+    'https://niqomrgbdcegxorlifel.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pcW9tcmdiZGNlZ3hvcmxpZmVsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE1NTM4MTcsImV4cCI6MjA1NzEyOTgxN30.6qAVJlUjbd-JnEDMBNPdyavb_-97HZcB7ECvmX7Pfus' // Use this securely server-side
+  )
+
+
+
+//   const hexToBlob = (hex: string, mimeType: string): Blob => {
+//     const bytes = new Uint8Array(
+//       hex.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || []
+//     );
+//     return new Blob([bytes], { type: mimeType });
+//   };
+
+  // Function to handle PDF download
+//   const handleDownload = async (fileName: string, bytea: string) => {
+//     try {
+//       const blob = hexToBlob(bytea, "application/pdf");
+//       const url = URL.createObjectURL(blob);
+//       const a = document.createElement("a");
+//       a.href = url;
+//       a.download = fileName;
+//       document.body.appendChild(a);
+//       a.click();
+//       document.body.removeChild(a);
+//       URL.revokeObjectURL(url);
+//     } catch (error) {
+//       console.error("Error downloading the file:", error);
+//     }
+//   };
+
+// const hexToBlob = (hex: string, mimeType: string): Blob => {
+//     // Remove the `\\x` prefix if present
+//     if (hex.startsWith("\\x")) {
+//       hex = hex.slice(2);
+//     }
+  
+//     // Convert hex string to binary data
+//     const bytes = new Uint8Array(
+//       hex.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || []
+//     );
+  
+//     // Create a Blob with the binary data
+//     return new Blob([bytes], { type: mimeType });
+//   };
+  
+//   const handleDownload = (fileName: string, bytea: string) => {
+//     try {
+//       // Convert bytea (hex string) to Blob
+//       const blob = hexToBlob(bytea, "application/pdf");
+  
+//       // Create a URL for the Blob
+//       const url = URL.createObjectURL(blob);
+  
+//       // Create a temporary anchor element to trigger the download
+//       const a = document.createElement("a");
+//       a.href = url;
+//       a.download = fileName;
+//       document.body.appendChild(a);
+//       a.click();
+  
+//       // Clean up
+//       document.body.removeChild(a);
+//       URL.revokeObjectURL(url);
+//     } catch (error) {
+//       console.error("Failed to download PDF:", error);
+//     }
+//   };
+
+
+//   useEffect(() => {
+//     const fetchUser = async () => {
+//       const { data: { user } } = await supabase.auth.getUser();
+//       setCurrentUser(user);
+//       console.log('kmfelm12',user);
+
+//     };
+
+//     const fetchDoctors = async () => {
+//       const { data, error } = await supabase.from("Doctor").select("name, email");
+//       if (!error) {
+//         const doctorMap: { [key: string]: string } = {};
+//         data.forEach(doctor => {
+//           doctorMap[doctor.name] = doctor.email;
+//         });
+//         setDoctors(doctorMap);
+//         // print('kmfelm',data,doctorMap)
+//         console.log('kmfelm',data,doctorMap);
+//       } else {
+//         console.error("Error fetching doctors:", error);
+//       }
+//     };
+
+//     fetchUser();
+//     fetchDoctors();
+
+//   }, []);
+function convertByteaToBlobUrl(byteaHex: string, mimeType: string = "application/pdf"): string | null {
+    if (!byteaHex || !byteaHex.startsWith("\\x")) {
+      console.warn("Invalid bytea hex string.");
+      return null;
+    }
+  
+    try {
+      const hex = byteaHex.slice(2); // Remove \x prefix
+      const binary = new Uint8Array(hex.length / 2);
+  
+      for (let i = 0; i < binary.length; i++) {
+        binary[i] = parseInt(hex.substr(i * 2, 2), 16);
+      }
+  
+      const blob = new Blob([binary], { type: mimeType });
+      return URL.createObjectURL(blob);
+    } catch (error) {
+      console.error("Failed to convert bytea to Blob:", error);
+      return null;
+    }
+  }
+
+//   function base64ToBlob(base64: string, type = 'application/pdf') {
+//     // const binary = atob(base64)
+//     // const bytes = new Uint8Array(base64.length)
+//     // for (let i = 0; i < binary.length; i++) {
+//     //   bytes[i] = binary.charCodeAt(i)
+//     // }
+//     return new Blob([base64], { type })
+//   }
+  
+  
+  
+  
+
+  useEffect(() => {
+    const fetchMedicalRecords = async () => {
+        console.log('fniefn')
+      const { data, error } = await supabase
+        .from('medical_records')  // <-- replace with your actual table name
+        .select(`*`);
+  
+      if (error) {
+        console.error('Error fetching medical records:', error);
+        return;
+      }
+
+      console.log("Medical records:", data);
+
+      const formatted = await Promise.all(
+        data.map(async (record: any, index: number) => {
+          let fileUrl = null;
+  
+          if (record.filePath) {
+            const { data: fileData } = supabase.storage
+              .from("test-doc")
+              .getPublicUrl(record.filePath);
+            fileUrl = fileData?.publicUrl || null;
+          }
+  
+          return {
+            id: record.id || (index + 1).toString(),
+            recordId: record.email_doc,
+            date: record.date,
+            name: record.name,
+            noteType: record.noteType,
+            author: record.author,
+            lastUpdated: record.lastUpdated || record.date,
+            updatedBy: record.updatedBy || record.author,
+            fileType: record.fileType,
+            fileName: record.fileName,
+            fileData: fileUrl, // used for download/view
+          };
+        })
+      );
+  
+      setRecords(formatted);
+    };
+  
+    fetchMedicalRecords();
+  }, []);
+  
+  
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user);
+      console.log('kmfelm12',user);
+
+    };
+
+    
+
+    // const fetchRecords = async () => {
+    //   const { data, error } = await supabase.from("Records").select("name, email");
+    //   if (!error) {
+    //     const doctorMap: { [key: string]: string } = {};
+    //     data.forEach(doctor => {
+    //       doctorMap[doctor.name] = doctor.email;
+    //     });
+    //     setDoctors(doctorMap);
+    //     // print('kmfelm',data,doctorMap)
+    //     console.log('kmfelm',data,doctorMap);
+    //   } else {
+    //     console.error("Error fetching doctors:", error);
+    //   }
+    // };
+
+    fetchUser();
+    // fetchDoctors();
+
+  }, []);
+
+// useEffect(() => {
+
+//     console.log('kmfelm');
+
+
+// }, [currentUser,doctors]);
+
+
+
+
   const [records, setRecords] = useState([
     {
       id: "1",
@@ -125,55 +350,69 @@ export default function MedicalRecordsDashboard() {
     console.log("Searching for downloadable records:", searchQuery)
   }
 
-  const handleAddRecord = (e: React.FormEvent) => {
-    e.preventDefault()
-
+  const handleAddRecord = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!newRecord.file) {
-      alert("Please upload a file")
-      return
+      alert("Please upload a file");
+      return;
     }
-
-    // Read the file and convert to data URL
-    const reader = new FileReader()
-    reader.onload = (event) => {
-      if (event.target?.result) {
-        // Create a new record with the form data
-        const today = new Date()
-        const formattedDate = format(today, "MM/dd/yyyy")
-
-        const record = {
-          id: (records.length + 1).toString(),
-          recordId: newRecord.recordId,
-          date: formattedDate,
+  
+    const today = new Date();
+    const formattedDate = format(today, "MM/dd/yyyy");
+  
+    const filePath = `${crypto.randomUUID()}`;
+  
+    const { data: uploadData, error: uploadError } = await supabase
+      .storage
+      .from("test-doc")
+      .upload(filePath, newRecord.file, {
+        cacheControl: '3600',
+        upsert: false,
+      });
+  
+    if (uploadError) {
+      console.error("Upload error:", uploadError);
+      alert("Failed to upload file");
+      return;
+    }
+  
+    const { error: insertError } = await supabase
+      .from("medical_records")
+      .insert([
+        {
+          email_doc: newRecord.recordId,
           name: newRecord.name,
           noteType: newRecord.noteType,
           author: newRecord.author,
+          date: formattedDate,
           lastUpdated: formattedDate,
           updatedBy: newRecord.author,
-          fileType: newRecord.fileType,
-          fileName: newRecord.file!.name,
-          fileSize: (newRecord.file!.size / 1024).toFixed(2) + " KB",
-          fileData: event.target.result as string,
-        }
-
-        // Add the new record to the records array
-        setRecords([...records, record])
-
-        // Reset the form and close the dialog
-        setNewRecord({
-          recordId: "",
-          name: "",
-          noteType: "",
-          author: "",
-          fileType: "pdf",
-          file: null,
-        })
-        setIsAddRecordOpen(false)
-      }
+          fileType: newRecord.fileType === "pdf" ? "application/pdf" : "image/png",
+          fileName: newRecord.file.name,
+          filePath: filePath, // ⬅️ save the path instead of binary
+        },
+      ]);
+  
+    if (insertError) {
+      console.error("Insert error:", insertError);
+      alert("Failed to save metadata");
+      return;
     }
+  
+    setNewRecord({
+      recordId: "",
+      name: "",
+      noteType: "",
+      author: "",
+      fileType: "pdf",
+      file: null,
+    });
+    setIsAddRecordOpen(false);
+  };
+  
 
-    reader.readAsDataURL(newRecord.file)
-  }
+  
+  
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -315,7 +554,7 @@ export default function MedicalRecordsDashboard() {
                         <td className="py-3 px-4">
                           {record.fileName ? (
                             <span className="text-sm text-gray-600">
-                              {record.fileName} ({record.fileSize})
+                              {record.fileName} 
                             </span>
                           ) : (
                             <span className="text-sm text-gray-400">No file</span>
@@ -324,15 +563,25 @@ export default function MedicalRecordsDashboard() {
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
                             <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDownload(record)}
-                              disabled={!record.fileData}
-                              className={!record.fileData ? "cursor-not-allowed opacity-50" : ""}
-                              title={!record.fileData ? "No file available" : "Download file"}
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDownload({
+                                    name: record.fileName ?? "",
+                                    date: record.date,
+                                    author: record.author,
+                                    noteType: record.noteType,
+                                    fileType: "pdf",
+                                    fileName: record.fileName,
+                                    fileSize: "",
+                                    fileData: record.fileData,
+                                    recordId: record.recordId
+                                })}
+                                disabled={!record.fileData}
+                                className={!record.fileData ? "cursor-not-allowed opacity-50" : ""}
+                                title={!record.fileData ? "No file available" : "Download file"}
                             >
-                              <Download className="h-4 w-4 mr-1" />
-                              Download
+                                <Download className="h-4 w-4 mr-1" />
+                                Download
                             </Button>
                             <Button variant="outline" size="sm">
                               <Printer className="h-4 w-4 mr-1" />
@@ -515,6 +764,7 @@ function handleDownload(record: {
 }) {
   // If we have actual file data, use it for download
   if (record.fileData) {
+    console.log("Blob URL:", record.fileData);
     const a = document.createElement("a")
     a.href = record.fileData
     a.download =
