@@ -43,15 +43,13 @@ const formSchema = z
     phoneNumber: z.string().min(10, {
       message: "Phone number must be at least 10 digits.",
     }),
-    dateOfBirth: z // <--- Modify this section
+    dateOfBirth: z
     .date({
-      // invalid_type_error: "Please enter a valid date.", // Keep type validation if needed
     })
-    .nullable() // Allow it to be null
-    .optional() // Make the field optional
+    .nullable()
+    .optional()
     .refine(
       (date) => {
-        // This check should only apply if a date is provided
         if (date === undefined || date === null) return true;
         return date <= new Date();
       },
