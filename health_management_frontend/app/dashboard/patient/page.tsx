@@ -75,7 +75,18 @@ export default function PatientDashboard() {
     })
   );
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  
   const [currentUser, setCurrentUser] = useState<SupabaseUser | null>(null);
+  useEffect(() => {
+    const fetchUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setCurrentUser(user);
+    };
+    fetchUser();
+  },[]);
+  
 
   // Mock data for the patient
   // TODO: Replace with actual data fetching logic
@@ -94,14 +105,14 @@ export default function PatientDashboard() {
     temp: 0,
   });
   useEffect(() => {
-    const currentPatientId = localStorage.getItem("user") || "{}";
-    const parsedID = JSON.parse(currentPatientId);
+    // const currentPatientId = localStorage.getItem("user") || "{}";
+    // const parsedID = JSON.parse(currentPatientId);
     // console.log("Parsed ID:", parsedID)
     const fetchPatientInfo = async () => {
       const { data, error } = await supabase
         .from("Info")
         .select("*")
-        .eq("email", parsedID)
+        .eq("email", currentUser)
         .single();
 
       if (error) {
@@ -114,16 +125,16 @@ export default function PatientDashboard() {
     };
 
     fetchPatientInfo();
-  }, []);
+  }, [currentUser]);
   useEffect(() => {
-    const currentPatientId = localStorage.getItem("user") || "{}";
-    const parsedID = JSON.parse(currentPatientId);
+    // const currentPatientId = localStorage.getItem("user") || "{}";
+    // const parsedID = JSON.parse(currentPatientId);
     // console.log("Parsed ID:", parsedID)
     const fetchPatient = async () => {
       const { data, error } = await supabase
         .from("Patient")
         .select("name, email, phone_num")
-        .eq("email", parsedID)
+        .eq("email", currentUser)
         .single();
 
       if (error) {
@@ -135,16 +146,16 @@ export default function PatientDashboard() {
       }
     };
     fetchPatient();
-  }, []);
+  }, [currentUser]);
 
   useEffect(() => {
-    const currentPatientId = localStorage.getItem("user") || "{}";
-    const parsedID = JSON.parse(currentPatientId);
+    // const currentPatientId = localStorage.getItem("user") || "{}";
+    // const parsedID = JSON.parse(currentPatientId);
     const fetchAppointments = async () => {
       const { data, error } = await supabase
         .from("Appointment")
         .select("*")
-        .eq("patient_email", parsedID)
+        .eq("patient_email", currentUser)
         .order("appt_date", { ascending: true });
 
       if (!error) {
@@ -154,7 +165,7 @@ export default function PatientDashboard() {
     };
 
     fetchAppointments();
-  }, []);
+  }, [currentUser]);
 
   const patientData = {
     name: patient.name,
@@ -216,7 +227,6 @@ export default function PatientDashboard() {
   // ]
 
   // Health metrics data
-  // TODO: Replace with actual data fetching logic
   const healthMetrics = {
     age: `${patientInfo.age} yrs old`,
     heartRate: patientInfo.bpm,
@@ -245,62 +255,10 @@ export default function PatientDashboard() {
       icon: <FileText className="h-6 w-6" />,
       link: "/dashboard/patient/records",
       color: "bg-purple-100",
-    },
-    // {
-    //   title: "Bills & Payments",
-    //   icon: <CreditCard className="h-6 w-6" />,
-    //   link: "/dashboard/patient/bills",
-    //   color: "bg-yellow-100",
-    // },
-    // {
-    //   title: "Lab Results",
-    //   icon: <Clipboard className="h-6 w-6" />,
-    //   link: "/dashboard/patient/lab-results",
-    //   color: "bg-pink-100",
-    // },
-    // {
-    //   title: "Messages",
-    //   icon: <MessageSquare className="h-6 w-6" />,
-    //   link: "/dashboard/patient/messages",
-    //   color: "bg-indigo-100",
-    // },
-    // {
-    //   title: "Health Tracking",
-    //   icon: <Activity className="h-6 w-6" />,
-    //   link: "/dashboard/patient/health-tracking",
-    //   color: "bg-red-100",
-    // },
-    // {
-    //   title: "Settings",
-    //   icon: <Settings className="h-6 w-6" />,
-    //   link: "/dashboard/patient/settings",
-    //   color: "bg-gray-100",
+    }
   ];
-
-  // const supabase = createClient(
-  //   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  //   process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_KEY! // Use this securely server-side
-  // )
-
-  // Replace with real authenticated user info
-  // const currentPatientId = "66ddd3dd-aa53-4146-b724-47fd54b5607c"
-  // useEffect(() => {
-  //   const fetchUser = async () => {
-  //     const { data: { user } } = await supabase.auth.getUser();
-  //     setCurrentUser(user);
-  //   };
-
-  //   fetchUser();
-  // }, []);
-
+  
   useEffect(() => {
-    const fetchUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setCurrentUser(user);
-    };
-
     const fetchAppointments = async () => {
       if (currentUser?.email) {
         const { data, error } = await supabase
@@ -312,8 +270,6 @@ export default function PatientDashboard() {
         if (!error) setAppointments(data);
       }
     };
-
-    fetchUser();
     fetchAppointments();
   }, [currentUser]);
 
@@ -329,7 +285,11 @@ export default function PatientDashboard() {
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center space-x-3">
             <Avatar>
-              <AvatarFallback>U1</AvatarFallback>
+              <AvatarFallback>
+                {currentUser?.email
+                  ? currentUser.email.substring(0, 2).toUpperCase()
+                  : "PT"}
+              </AvatarFallback>
             </Avatar>
             <div>
               <p className="font-medium">
