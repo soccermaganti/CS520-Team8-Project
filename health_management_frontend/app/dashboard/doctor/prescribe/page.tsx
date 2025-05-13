@@ -27,7 +27,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "../../../supabaseClient";
 
-const PatientsPage = () => {
+const PrescribePage = () => {
   const [doctorEmail, setDoctorEmail] = useState("");
   useEffect(() => {
     const fetchDoctor = async () => {
@@ -77,9 +77,7 @@ const PatientsPage = () => {
         .from("Patient-Doctor")
         .select("*")
         .eq("doctor_email", doctorEmail)
-        .order("accepted", { ascending: false })
-        .order("doctor_email", { ascending: true });
-
+        .eq("accepted", true);
       if (error) {
         console.error("Error fetching doctors:", error);
       } else {
@@ -103,55 +101,34 @@ const PatientsPage = () => {
 
     fetchUser();
   }, []);
+  const [selectedPatient, setSelectedPatient] = useState("");
 
-  const handleSubmit = async (doc_e, pat_e) => {
-    try {
-      // Update the "Patient-Doctor" table to mark the request as accepted
-      // e.preventDefault()
-      // console.log("pressed")
-      const { data, error } = await supabase
-        .from("Patient-Doctor")
-        .update({ accepted: true })
-        .eq("doctor_email", doc_e)
-        .eq("patient_email", pat_e);
+  const [formData, setFormData] = useState({
+    drug_name: "",
+    dosage: 0,
+    exp_date: "",
+    start_date: "",
+    quantity: 0,
+    patient_email: "",
+    doctor_email: "",
+  });
 
-      if (error) {
-        console.error("Error updating patient-doctor relationship:", error);
-      } else {
-        console.log("Patient-doctor relationship updated successfully:", data);
-        // Optionally, refresh the patientDoctors state here
-      }
-    } catch (err) {
-      console.error("Error in handleSubmit:", err);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    formData.patient_email = selectedPatient.split(",")[1];
+    formData.doctor_email = doctorEmail;
+    console.log(`Selected Doctor Info ${formData}`);
+
+    // setLoading(true)
+
+    const { error } = await supabase.from("Prescription").insert([formData]);
+
+    if (error) {
+      console.error("Insert failed:", error.message, error.details, error.hint);
+      alert("Already Prescribed");
+    } else {
+      alert(`Prescribed Medication to ${selectedPatient.split(",")[0]}`);
     }
-  };
-  const listPatients = () => {
-    return patientDoctors.map((doctor) => (
-      <Card key={doctor.doctor_email + " " + doctor.patient_email}>
-        <CardHeader>
-          <CardTitle>{doctor.patient_name}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p>{doctor.patient_email}</p>
-          {doctor.accepted ? (
-            <p>Accepted</p>
-          ) : (
-            <div className="flex justify-between items-center">
-              <p>Requested</p>
-              <Button
-                onClick={() => {
-                  handleSubmit(doctor.doctor_email, doctor.patient_email);
-                  window.location.reload();
-                }}
-                className="ml-auto"
-              >
-                Accept
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    ));
   };
 
   return (
@@ -186,17 +163,13 @@ const PatientsPage = () => {
             <NavItem href="/dashboard/doctor/appointments" icon={<Calendar />}>
               Appointments
             </NavItem>
-            <NavItem
-              href="/dashboard/doctor/patients"
-              icon={<Calendar />}
-              active
-            >
+            <NavItem href="/dashboard/doctor/patients" icon={<Calendar />}>
               Patients
             </NavItem>
             <NavItem href="/dashboard/doctor/records" icon={<FileText />}>
               Records
             </NavItem>
-            <NavItem href="/dashboard/doctor/prescribe" icon={<Pill />}>
+            <NavItem href="/dashboard/doctor/prescribe" icon={<Pill />} active>
               Prescribe
             </NavItem>
           </div>
@@ -226,12 +199,109 @@ const PatientsPage = () => {
           <div className="space-y-8">
             <Card>
               <CardHeader>
-                <CardTitle>Requested and Assigned Patients</CardTitle>
+                <CardTitle>Prescribe Medication</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4 max-h-80 overflow-y-auto">
-                  {listPatients()}
-                </div>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <select
+                    id="doctor"
+                    className="w-full border border-gray-300 rounded-md p-2"
+                    onChange={(e) => {
+                      setSelectedPatient(e.target.value);
+                    }}
+                  >
+                    <option value="">-- Select a Patient --</option>
+                    {patientDoctors.map((pairing) => (
+                      <option
+                        key={pairing.patient_email}
+                        value={[pairing.patient_name, pairing.patient_email]}
+                      >
+                        {pairing.patient_name} ({pairing.patient_email})
+                      </option>
+                    ))}
+                  </select>
+                  <div>
+                    <Label htmlFor="drug_name">Drug Name</Label>
+                    <Input
+                      id="drug_name"
+                      type="text"
+                      placeholder="Enter drug name"
+                      required
+                      className="mt-1"
+                      value={formData.drug_name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, drug_name: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="dosage">Dosage (mg/day)</Label>
+                    <Input
+                      id="dosage"
+                      type="number"
+                      step="0.01"
+                      placeholder="Enter dosage"
+                      required
+                      className="mt-1"
+                      value={formData.dosage}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          dosage: parseFloat(e.target.value) || 0,
+                        })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="start_date">Start Date</Label>
+                    <Input
+                      id="start_date"
+                      type="date"
+                      required
+                      className="mt-1"
+                      value={formData.start_date}
+                      onChange={(e) =>
+                        setFormData({ ...formData, start_date: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="exp_date">Expiration Date</Label>
+                    <Input
+                      id="exp_date"
+                      type="date"
+                      required
+                      className="mt-1"
+                      value={formData.exp_date}
+                      onChange={(e) =>
+                        setFormData({ ...formData, exp_date: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="quantity">Quantity</Label>
+                    <Input
+                      id="quantity"
+                      type="number"
+                      placeholder="Enter quantity"
+                      required
+                      className="mt-1"
+                      value={formData.quantity}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          quantity: parseInt(e.target.value) || 0,
+                        })
+                      }
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    className="bg-teal-600 hover:bg-teal-700"
+                  >
+                    Prescribe
+                  </Button>
+                </form>
               </CardContent>
             </Card>
           </div>
@@ -261,4 +331,4 @@ function NavItem({ href, icon, children, active = false }) {
     </Link>
   );
 }
-export default PatientsPage;
+export default PrescribePage;
