@@ -77,7 +77,7 @@ const PatientsPage = () => {
         .from("Patient-Doctor")
         .select("*")
         .eq("doctor_email", doctorEmail)
-        .order("accepted", { ascending: false })
+        .order("accepted", { ascending: true })
         .order("doctor_email", { ascending: true });
 
       if (error) {
