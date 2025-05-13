@@ -29,6 +29,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { format } from "date-fns"
 import { createClient } from '@supabase/supabase-js'
+import { useRouter } from 'next/navigation';
+
 
 
 export default function MedicalRecordsDashboard() {
@@ -36,10 +38,16 @@ export default function MedicalRecordsDashboard() {
   const [isAddRecordOpen, setIsAddRecordOpen] = useState(false)
   const [doctors, setDoctors] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
+  const [accountName, setAccountName] = useState(null);
+  const [accountNameL, setAccountNameL] = useState(null);
+
+
   const supabase = createClient(
     'https://niqomrgbdcegxorlifel.supabase.co',
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pcW9tcmdiZGNlZ3hvcmxpZmVsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE1NTM4MTcsImV4cCI6MjA1NzEyOTgxN30.6qAVJlUjbd-JnEDMBNPdyavb_-97HZcB7ECvmX7Pfus' // Use this securely server-side
   )
+  const router = useRouter();
+
 
 
 
@@ -106,54 +114,44 @@ export default function MedicalRecordsDashboard() {
 //   };
 
 
-//   useEffect(() => {
-//     const fetchUser = async () => {
-//       const { data: { user } } = await supabase.auth.getUser();
-//       setCurrentUser(user);
-//       console.log('kmfelm12',user);
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user);
+      console.log('kmfelm12',user);
+      console.log('kmfelm123',user?.user_metadata?.first_name);
+      setAccountName(user?.user_metadata?.first_name)
+      setAccountNameL(user?.user_metadata?.last_name)
 
-//     };
 
-//     const fetchDoctors = async () => {
-//       const { data, error } = await supabase.from("Doctor").select("name, email");
-//       if (!error) {
-//         const doctorMap: { [key: string]: string } = {};
-//         data.forEach(doctor => {
-//           doctorMap[doctor.name] = doctor.email;
-//         });
-//         setDoctors(doctorMap);
-//         // print('kmfelm',data,doctorMap)
-//         console.log('kmfelm',data,doctorMap);
-//       } else {
-//         console.error("Error fetching doctors:", error);
+
+    };
+
+
+    fetchUser();
+
+  }, []);
+// function convertByteaToBlobUrl(byteaHex: string, mimeType: string = "application/pdf"): string | null {
+//     if (!byteaHex || !byteaHex.startsWith("\\x")) {
+//       console.warn("Invalid bytea hex string.");
+//       return null;
+//     }
+  
+//     try {
+//       const hex = byteaHex.slice(2); // Remove \x prefix
+//       const binary = new Uint8Array(hex.length / 2);
+  
+//       for (let i = 0; i < binary.length; i++) {
+//         binary[i] = parseInt(hex.substr(i * 2, 2), 16);
 //       }
-//     };
-
-//     fetchUser();
-//     fetchDoctors();
-
-//   }, []);
-function convertByteaToBlobUrl(byteaHex: string, mimeType: string = "application/pdf"): string | null {
-    if (!byteaHex || !byteaHex.startsWith("\\x")) {
-      console.warn("Invalid bytea hex string.");
-      return null;
-    }
   
-    try {
-      const hex = byteaHex.slice(2); // Remove \x prefix
-      const binary = new Uint8Array(hex.length / 2);
-  
-      for (let i = 0; i < binary.length; i++) {
-        binary[i] = parseInt(hex.substr(i * 2, 2), 16);
-      }
-  
-      const blob = new Blob([binary], { type: mimeType });
-      return URL.createObjectURL(blob);
-    } catch (error) {
-      console.error("Failed to convert bytea to Blob:", error);
-      return null;
-    }
-  }
+//       const blob = new Blob([binary], { type: mimeType });
+//       return URL.createObjectURL(blob);
+//     } catch (error) {
+//       console.error("Failed to convert bytea to Blob:", error);
+//       return null;
+//     }
+//   }
 
 //   function base64ToBlob(base64: string, type = 'application/pdf') {
 //     // const binary = atob(base64)
@@ -168,24 +166,89 @@ function convertByteaToBlobUrl(byteaHex: string, mimeType: string = "application
   
   
 
-  useEffect(() => {
-    const fetchMedicalRecords = async () => {
-        console.log('fniefn')
-      const { data, error } = await supabase
-        .from('medical_records')  // <-- replace with your actual table name
-        .select(`*`);
+//   useEffect(() => {
+//     const fetchMedicalRecords = async () => {
+//         console.log('fniefn')
+//       const { data, error } = await supabase
+//         .from('medical_records')  // <-- replace with your actual table name
+//         .select(`*`).eq("email", currentUser?.email);;
   
-      if (error) {
-        console.error('Error fetching medical records:', error);
+//       if (error) {
+//         console.error('Error fetching medical records:', error);
+//         return;
+//       }
+
+//       console.log("Medical records:", data);
+
+//       const formatted = await Promise.all(
+//         data.map(async (record: any, index: number) => {
+//           let fileUrl = null;
+  
+//           if (record.filePath) {
+//             const { data: fileData } = supabase.storage
+//               .from("test-doc")
+//               .getPublicUrl(record.filePath);
+//             fileUrl = fileData?.publicUrl || null;
+//           }
+  
+//           return {
+//             id: record.id || (index + 1).toString(),
+//             recordId: record.email_doc,
+//             date: record.date,
+//             name: record.name,
+//             noteType: record.noteType,
+//             author: record.author,
+//             lastUpdated: record.lastUpdated || record.date,
+//             updatedBy: record.updatedBy || record.author,
+//             fileType: record.fileType,
+//             fileName: record.fileName,
+//             fileData: fileUrl, // used for download/view
+//           };
+//         })
+//       );
+  
+//       setRecords(formatted);
+//     };
+  
+//     fetchMedicalRecords();
+//   }, []);
+
+  const fetchUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setCurrentUser(user);
+    console.log('kmfelm12',user);
+
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      // Step 1: Fetch the current user
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+  
+      if (userError) {
+        console.error("Failed to fetch user:", userError);
         return;
       }
-
-      console.log("Medical records:", data);
-
-      const formatted = await Promise.all(
-        data.map(async (record: any, index: number) => {
-          let fileUrl = null;
   
+      setCurrentUser(user);
+  
+      // Step 2: Now fetch medical records using user's email
+      const { data: recordsData, error: recordsError } = await supabase
+        .from("medical_records")
+        .select("*")
+        .eq("email", user?.email);
+  
+      if (recordsError) {
+        console.error("Error fetching medical records:", recordsError);
+        return;
+      }
+  
+      const formatted = await Promise.all(
+        recordsData.map(async (record: any, index: number) => {
+          let fileUrl = null;
           if (record.filePath) {
             const { data: fileData } = supabase.storage
               .from("test-doc")
@@ -197,14 +260,14 @@ function convertByteaToBlobUrl(byteaHex: string, mimeType: string = "application
             id: record.id || (index + 1).toString(),
             recordId: record.email_doc,
             date: record.date,
-            name: record.name,
+            name: record.name_doc,
             noteType: record.noteType,
             author: record.author,
             lastUpdated: record.lastUpdated || record.date,
             updatedBy: record.updatedBy || record.author,
             fileType: record.fileType,
             fileName: record.fileName,
-            fileData: fileUrl, // used for download/view
+            fileData: fileUrl,
           };
         })
       );
@@ -212,40 +275,43 @@ function convertByteaToBlobUrl(byteaHex: string, mimeType: string = "application
       setRecords(formatted);
     };
   
-    fetchMedicalRecords();
+    fetchData();
   }, []);
   
+
+  
+  
   
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setCurrentUser(user);
-      console.log('kmfelm12',user);
+//   useEffect(() => {
+//     const fetchUser = async () => {
+//       const { data: { user } } = await supabase.auth.getUser();
+//       setCurrentUser(user);
+//       console.log('kmfelm12',user);
 
-    };
+//     };
 
     
 
-    // const fetchRecords = async () => {
-    //   const { data, error } = await supabase.from("Records").select("name, email");
-    //   if (!error) {
-    //     const doctorMap: { [key: string]: string } = {};
-    //     data.forEach(doctor => {
-    //       doctorMap[doctor.name] = doctor.email;
-    //     });
-    //     setDoctors(doctorMap);
-    //     // print('kmfelm',data,doctorMap)
-    //     console.log('kmfelm',data,doctorMap);
-    //   } else {
-    //     console.error("Error fetching doctors:", error);
-    //   }
-    // };
+//     // const fetchRecords = async () => {
+//     //   const { data, error } = await supabase.from("Records").select("name, email");
+//     //   if (!error) {
+//     //     const doctorMap: { [key: string]: string } = {};
+//     //     data.forEach(doctor => {
+//     //       doctorMap[doctor.name] = doctor.email;
+//     //     });
+//     //     setDoctors(doctorMap);
+//     //     // print('kmfelm',data,doctorMap)
+//     //     console.log('kmfelm',data,doctorMap);
+//     //   } else {
+//     //     console.error("Error fetching doctors:", error);
+//     //   }
+//     // };
 
-    fetchUser();
-    // fetchDoctors();
+//     fetchUser();
+//     // fetchDoctors();
 
-  }, []);
+//   }, []);
 
 // useEffect(() => {
 
@@ -258,80 +324,6 @@ function convertByteaToBlobUrl(byteaHex: string, mimeType: string = "application
 
 
   const [records, setRecords] = useState([
-    {
-      id: "1",
-      recordId: "MR-001",
-      date: "03/20/2020",
-      name: "Prolactin",
-      noteType: "History and Physical",
-      author: "Dr. Branch",
-      lastUpdated: "04/28/2020",
-      updatedBy: "Stephanie Branch",
-      fileType: "pdf" as const,
-      fileName: "prolactin_report.pdf",
-      fileSize: "245.32 KB",
-      fileData: null as string | null,
-    },
-    {
-      id: "2",
-      recordId: "MR-002",
-      date: "03/29/2020",
-      name: "Bilirubin, total",
-      noteType: "Cardiology consultation",
-      author: "Dr. Branch",
-      lastUpdated: "04/29/2020",
-      updatedBy: "Stephanie Branch",
-      fileType: "png" as const,
-      fileData: null as string | null,
-    },
-    {
-      id: "3",
-      recordId: "MR-003",
-      date: "04/20/2020",
-      name: "DHEA-sulphate",
-      noteType: "History and Physical",
-      author: "Dr. Sullivan",
-      lastUpdated: "05/03/2020",
-      updatedBy: "Jimmy Sullivan",
-      fileType: "pdf" as const,
-      fileData: null as string | null,
-    },
-    {
-      id: "4",
-      recordId: "MR-004",
-      date: "05/10/2020",
-      name: "Free Urinary Cortisol",
-      noteType: "History and Physical",
-      author: "Dr. Melzer",
-      lastUpdated: "05/27/2020",
-      updatedBy: "Melissa Melzer",
-      fileType: "pdf" as const,
-      fileData: null as string | null,
-    },
-    {
-      id: "5",
-      recordId: "MR-005",
-      date: "05/15/2020",
-      name: "Alcohol",
-      noteType: "History and Physical",
-      author: "Dr. Branch",
-      lastUpdated: "05/28/2020",
-      updatedBy: "Stephanie Branch",
-      fileType: "png" as const,
-      fileData: null as string | null,
-    },
-    {
-      id: "6",
-      recordId: "MR-006",
-      date: "05/20/2020",
-      name: "Globuline",
-      noteType: "Cardiology consultation",
-      author: "Dr. Velaskez",
-      lastUpdated: "05/28/2020",
-      updatedBy: "Cris Velaskez",
-      fileType: "pdf" as const,
-      fileData: null as string | null,
-    },
   ])
 
   // Form state for new record
@@ -369,29 +361,37 @@ function convertByteaToBlobUrl(byteaHex: string, mimeType: string = "application
         cacheControl: '3600',
         upsert: false,
       });
+      console.log('inside upload')
   
     if (uploadError) {
       console.error("Upload error:", uploadError);
       alert("Failed to upload file");
       return;
     }
+
+    const fullNameParts = [];
+if (accountName) fullNameParts.push(accountName);
+if (accountNameL) fullNameParts.push(accountNameL);
+const fullName = fullNameParts.join(' ');
   
     const { error: insertError } = await supabase
       .from("medical_records")
-      .insert([
+    .insert([
         {
-          email_doc: newRecord.recordId,
-          name: newRecord.name,
-          noteType: newRecord.noteType,
-          author: newRecord.author,
-          date: formattedDate,
-          lastUpdated: formattedDate,
-          updatedBy: newRecord.author,
-          fileType: newRecord.fileType === "pdf" ? "application/pdf" : "image/png",
-          fileName: newRecord.file.name,
-          filePath: filePath, // ⬅️ save the path instead of binary
+            email_doc: newRecord.recordId,
+            name: fullName,
+            noteType: newRecord.noteType,
+            author: newRecord.author,
+            date: formattedDate,
+            lastUpdated: formattedDate,
+            updatedBy: newRecord.author,
+            fileType:  "application/pdf",
+            fileName: newRecord.file.name,
+            filePath: filePath, // ⬅️ save the path instead of binary
+            email: currentUser?.email,
+            name_doc: newRecord.name
         },
-      ]);
+    ]);
   
     if (insertError) {
       console.error("Insert error:", insertError);
@@ -408,6 +408,8 @@ function convertByteaToBlobUrl(byteaHex: string, mimeType: string = "application
       file: null,
     });
     setIsAddRecordOpen(false);
+    window.location.reload(); // or router.refresh() if using App Router
+
   };
   
 
@@ -530,9 +532,9 @@ function convertByteaToBlobUrl(byteaHex: string, mimeType: string = "application
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 px-4 font-medium text-gray-700">Record ID</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-700">Doctor ID</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-700">Date</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-700">Name</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-700">Doctor Name</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-700">Note Type</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-700">Author</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-700">Last Updated</th>
@@ -583,10 +585,10 @@ function convertByteaToBlobUrl(byteaHex: string, mimeType: string = "application
                                 <Download className="h-4 w-4 mr-1" />
                                 Download
                             </Button>
-                            <Button variant="outline" size="sm">
+                            {/* <Button variant="outline" size="sm">
                               <Printer className="h-4 w-4 mr-1" />
                               Print
-                            </Button>
+                            </Button> */}
                           </div>
                         </td>
                       </tr>
@@ -620,21 +622,21 @@ function convertByteaToBlobUrl(byteaHex: string, mimeType: string = "application
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <Label htmlFor="recordId" className="w-24 text-right flex-shrink-0">
-                      Record ID <span className="text-red-500">*</span>
+                      Doctor mail <span className="text-red-500">*</span>
                     </Label>
                     <Input
                       id="recordId"
                       value={newRecord.recordId}
                       onChange={(e) => setNewRecord({ ...newRecord, recordId: e.target.value })}
                       className="flex-1"
-                      placeholder="e.g. MR-007"
+                      placeholder="abc@gmail.com"
                       required
                     />
                   </div>
 
                   <div className="flex items-center gap-3">
                     <Label htmlFor="name" className="w-24 text-right flex-shrink-0">
-                      Name <span className="text-red-500">*</span>
+                      Doctor Name <span className="text-red-500">*</span>
                     </Label>
                     <Input
                       id="name"
@@ -662,7 +664,7 @@ function convertByteaToBlobUrl(byteaHex: string, mimeType: string = "application
 
                   <div className="flex items-center gap-3">
                     <Label htmlFor="author" className="w-24 text-right flex-shrink-0">
-                      Author <span className="text-red-500">*</span>
+                      Authorized org <span className="text-red-500">*</span>
                     </Label>
                     <Input
                       id="author"
