@@ -25,11 +25,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 
-
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_KEY! // Use this securely server-side
-  )
+import { supabase } from "../../../supabaseClient";
 
 export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState([])

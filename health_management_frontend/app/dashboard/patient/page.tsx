@@ -24,10 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_KEY! // Use this securely server-side
-)
+import { supabase } from "../../supabaseClient";
 
 export default function PatientDashboard() {
   const [currentDate] = useState(
