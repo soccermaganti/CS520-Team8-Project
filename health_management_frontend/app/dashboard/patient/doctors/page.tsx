@@ -25,11 +25,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "../../../supabaseClient";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_KEY! // Use this securely server-side
-);
+
 const DoctorsPage = () => {
   const [patientEmail, setPatientEmail] = useState("");
   useEffect(() => {
@@ -69,7 +67,6 @@ const DoctorsPage = () => {
     fetchPatient();
   }, [patientEmail]);
   const [patientDoctors, setPatientDoctors] = useState([]);
-  const [updated, setUpdated] = useState(false)
   useEffect(() => {
     const fetchPatientDoctors = async () => {
       const { data, error } = await supabase
@@ -114,7 +111,8 @@ const DoctorsPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     const patient_email = patientEmail
-    const doctor_email = selectedDoctor
+    const doctor_email = selectedDoctor.split(',')
+    console.log(`Selected Doctor Info ${doctor_email[0]}`)
     
 
     // setLoading(true)
@@ -122,8 +120,10 @@ const DoctorsPage = () => {
     const { error } = await supabase.from("Patient-Doctor").insert([
       {
         patient_email : patient_email,
-        doctor_email: doctor_email,
-        accepted: false
+        doctor_email: doctor_email[1],
+        accepted: false,
+        patient_name: patientName,
+        doctor_name: doctor_email[0]
       },
       
     ])
@@ -192,7 +192,7 @@ const DoctorsPage = () => {
             >
               Medications
             </NavItem>
-            <NavItem href="/dashboard/patient/Doctors" icon={<Clipboard />} active>
+            <NavItem href="/dashboard/patient/doctors" icon={<Clipboard />} active>
                 Doctors
               </NavItem>
           </div>
@@ -232,7 +232,7 @@ const DoctorsPage = () => {
                 >
                 <option value="">-- Select a Doctor --</option>
                 {doctors.map((doctor) => (
-                <option key={doctor.email} value={doctor.email}>
+                <option key={doctor.email} value={[doctor.name, doctor.email]}>
                   {doctor.name} ({doctor.email})
                 </option>
                 ))}
@@ -251,9 +251,10 @@ const DoctorsPage = () => {
                 {patientDoctors.map((doctor) => (
                 <Card key={doctor.doctor_email + " " + doctor.patient_email}>
                   <CardHeader>
-                  <CardTitle>{doctor.doctor_email}</CardTitle>
+                  <CardTitle>{doctor.doctor_name}</CardTitle>
                   </CardHeader>
                   <CardContent>
+                    <p>{doctor.doctor_email}</p>
                   {doctor.accepted ? (
                     <p>Accepted</p>
                   ) : (

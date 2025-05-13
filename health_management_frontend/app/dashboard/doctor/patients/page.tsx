@@ -25,13 +25,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {supabase} from "../../../supabaseClient"
+import { supabase } from "../../../supabaseClient";
 
 const PatientsPage = () => {
   const [doctorEmail, setDoctorEmail] = useState("");
   useEffect(() => {
     const fetchDoctor = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         console.error("Error fetching patient");
       } else {
@@ -65,7 +67,9 @@ const PatientsPage = () => {
     };
     fetchDoctor();
   }, [doctorEmail]);
-  const [patientDoctors, setPatientDoctors] = useState<{ doctor_email: string; patient_email: string; accepted: boolean }[]>([]);
+  const [patientDoctors, setPatientDoctors] = useState<
+    { doctor_email: string; patient_email: string; accepted: boolean }[]
+  >([]);
   // const [updated, setUpdated] = useState(false)
   useEffect(() => {
     const fetchPatientDoctors = async () => {
@@ -74,7 +78,7 @@ const PatientsPage = () => {
         .select("*")
         .eq("doctor_email", doctorEmail)
         .order("accepted", { ascending: false })
-        .order("doctor_email", {ascending: true});
+        .order("doctor_email", { ascending: true });
 
       if (error) {
         console.error("Error fetching doctors:", error);
@@ -89,20 +93,32 @@ const PatientsPage = () => {
 
   const fetchPatient = async (patientEmail) => {
     const { data, error } = await supabase
-        .from("Patient")
-        .select("name")
-        .eq("email", patientEmail)
-        .single();
+      .from("Patient")
+      .select("name")
+      .eq("email", patientEmail)
+      .single();
 
-      if (error) {
-        console.error("Error fetching patient name:", error);
-        return "N/A";
-      } else {
-        // Set the doctor data in state or use it directly
-        // console.log("Patient data:", data);
-        return data.name;
-      }
-  }
+    if (error) {
+      console.error("Error fetching patient name:", error);
+      return "N/A";
+    } else {
+      // Set the doctor data in state or use it directly
+      // console.log("Patient data:", data);
+      return data.name;
+    }
+  };
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setCurrentUser(user);
+    };
+
+    fetchUser();
+  }, []);
 
   const handleSubmit = async (doc_e, pat_e) => {
     try {
@@ -125,6 +141,34 @@ const PatientsPage = () => {
       console.error("Error in handleSubmit:", err);
     }
   };
+  const listPatients = () => {
+    return patientDoctors.map((doctor) => (
+      <Card key={doctor.doctor_email + " " + doctor.patient_email}>
+        <CardHeader>
+          <CardTitle>{doctor.patient_name}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p>{doctor.patient_email}</p>
+          {doctor.accepted ? (
+            <p>Accepted</p>
+          ) : (
+            <div className="flex justify-between items-center">
+              <p>Requested</p>
+              <Button
+                onClick={() => {
+                  handleSubmit(doctor.doctor_email, doctor.patient_email);
+                  window.location.reload();
+                }}
+                className="ml-auto"
+              >
+                Accept
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    ));
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -137,10 +181,14 @@ const PatientsPage = () => {
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center space-x-3">
             <Avatar>
-              <AvatarFallback>UI</AvatarFallback>
+              <AvatarFallback>
+                {currentUser?.email
+                  ? currentUser.email.substring(0, 2).toUpperCase()
+                  : "DR"}
+              </AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-medium">{doctorName}</p>
+              <p className="font-medium">{currentUser?.email || "Doctor"}</p>
               <p className="text-xs text-gray-500">Doctor</p>
             </div>
           </div>
@@ -154,14 +202,18 @@ const PatientsPage = () => {
             <NavItem href="/dashboard/doctor/appointments" icon={<Calendar />}>
               Appointments
             </NavItem>
-            <NavItem href="/dashboard/doctor/patients" icon={<Calendar />} active>
+            <NavItem
+              href="/dashboard/doctor/patients"
+              icon={<Calendar />}
+              active
+            >
               Patients
+            </NavItem>
+            <NavItem href="/dashboard/doctor/records" icon={<FileText />}>
+              Records
             </NavItem>
           </div>
           <div className="absolute bottom-0 w-64 border-t border-gray-200">
-            <NavItem href="/dashboard/doctor/settings" icon={<Settings />}>
-              Settings
-            </NavItem>
             <NavItem href="/login" icon={<LogOut />}>
               Log Out
             </NavItem>
@@ -184,40 +236,19 @@ const PatientsPage = () => {
 
         <main className="flex-1 p-6 overflow-auto">
           {/* Doctors View */}
-            <div className="space-y-8">
+          <div className="space-y-8">
             <Card>
               <CardHeader>
-              <CardTitle>Requested and Assigned Patients</CardTitle>
+                <CardTitle>Requested and Assigned Patients</CardTitle>
               </CardHeader>
               <CardContent>
-              <div className="space-y-4 max-h-80 overflow-y-auto">
-                {patientDoctors.map((doctor) => (
-                <Card key={doctor.doctor_email + " " + doctor.patient_email}>
-                  <CardHeader>
-                  <CardTitle>{doctor.patient_email}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                  {doctor.accepted ? (
-                    <p>Accepted</p>
-                  ) : (
-                    <div className="flex justify-between items-center">
-                      <p>Requested</p>
-                      <Button
-                      onClick={() => handleSubmit(doctor.doctor_email, doctor.patient_email)}
-                      className="ml-auto"
-                      >
-                      Accept
-                      </Button>
-                    </div>
-                  )}
-                  </CardContent>
-                </Card>
-                ))}
-              </div>
+                <div className="space-y-4 max-h-80 overflow-y-auto">
+                  {listPatients()}
+                </div>
               </CardContent>
             </Card>
-            </div>
-          </main>
+          </div>
+        </main>
 
         <footer className="bg-white border-t border-gray-200 py-4 px-6">
           <p className="text-gray-600 text-sm text-center">
