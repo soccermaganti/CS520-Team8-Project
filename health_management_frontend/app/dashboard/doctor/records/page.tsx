@@ -31,7 +31,7 @@ import {supabase} from "../../../supabaseClient"
 
 export default function MedicalRecordsDashboard() {
     // const router = useRouter()
-  
+
     const [searchQuery, setSearchQuery] = useState("")
     const [isAddRecordOpen, setIsAddRecordOpen] = useState(false)
     const [records, setRecords] = useState([])
@@ -47,16 +47,16 @@ export default function MedicalRecordsDashboard() {
           console.log('kmfelm123',user?.user_metadata?.first_name);
           setAccountName(user?.user_metadata?.first_name)
           setAccountNameL(user?.user_metadata?.last_name)
-    
-    
-    
+
+
+
         };
-    
-    
+
+
         fetchUser();
-    
+
       }, []);
-  
+
     const [newRecord, setNewRecord] = useState({
       recordId: "",
       name: "",
@@ -65,54 +65,54 @@ export default function MedicalRecordsDashboard() {
       fileType: "pdf" as "pdf" | "png",
       file: null as File | null,
     })
-  
+
     useEffect(() => {
       const fetchData = async () => {
         const { data: { user } } = await supabase.auth.getUser()
         setCurrentUser(user)
-  
+
         const { data, error } = await supabase
           .from("medical_records")
           .select("*")
           .eq("email_doc", user?.email)
-  
+
         if (error) {
           console.error("Fetch error:", error)
           return
         }
-  
+
         const formatted = await Promise.all(data.map(async (record: any, index: number) => {
           let fileUrl = null
           if (record.filePath) {
             const { data: fileData } = supabase.storage.from("test-doc").getPublicUrl(record.filePath)
             fileUrl = fileData?.publicUrl || null
           }
-  
+
           return {
             ...record,
             id: record.id || (index + 1).toString(),
             fileData: fileUrl
           }
         }))
-  
+
         setRecords(formatted)
       }
-  
+
       fetchData()
     }, [])
-  
+
     const handleAddRecord = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newRecord.file) {
           alert("Please upload a file");
           return;
         }
-      
+
         const today = new Date();
         const formattedDate = format(today, "MM/dd/yyyy");
-      
+
         const filePath = `${crypto.randomUUID()}`;
-      
+
         const { data: uploadData, error: uploadError } = await supabase
           .storage
           .from("test-doc")
@@ -121,18 +121,18 @@ export default function MedicalRecordsDashboard() {
             upsert: false,
           });
           console.log('inside upload')
-      
+
         if (uploadError) {
           console.error("Upload error:", uploadError);
           alert("Failed to upload file");
           return;
         }
-    
+
         const fullNameParts = [];
     if (accountName) fullNameParts.push(accountName);
     if (accountNameL) fullNameParts.push(accountNameL);
     const fullName = fullNameParts.join(' ');
-      
+
         const { error: insertError } = await supabase
           .from("medical_records")
         .insert([
@@ -144,20 +144,20 @@ export default function MedicalRecordsDashboard() {
                 date: formattedDate,
                 lastUpdated: formattedDate,
                 updatedBy: newRecord.author,
-                fileType:  "application/pdf",
+                fileType: "application/pdf",
                 fileName: newRecord.file.name,
                 filePath: filePath, // ⬅️ save the path instead of binary
                 email_doc: currentUser?.email,
                 name: newRecord.name
             },
         ]);
-      
+
         if (insertError) {
           console.error("Insert error:", insertError);
           alert("Failed to save metadata");
           return;
         }
-      
+
         setNewRecord({
           recordId: "",
           name: "",
@@ -168,9 +168,9 @@ export default function MedicalRecordsDashboard() {
         });
         setIsAddRecordOpen(false);
         window.location.reload(); // or router.refresh() if using App Router
-    
+
       };
-  
+
     const handleDownload = (record: any) => {
       if (!record.fileData) return
       const a = document.createElement("a")

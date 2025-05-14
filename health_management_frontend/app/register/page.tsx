@@ -22,12 +22,12 @@ import { toast } from "@/components/ui/use-toast";
 import { supabase } from "../supabaseClient";
 import localHost from "../localHost";
 import getCookie from "../getCookie";
-import { Label } from "@/components/ui/label"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { CalendarIcon } from "lucide-react"
-import { format } from "date-fns"
-import { cn } from "@/lib/utils"
+import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 const formSchema = z
   .object({
@@ -55,21 +55,22 @@ const formSchema = z
       .refine(
         (date) => {
           // Ensure the date is not in the future
-          return date <= new Date()
+          return date <= new Date();
         },
         {
           message: "Date of birth cannot be in the future",
-        }),
+        }
+      ),
     password: z.string().min(8, {
       message: "Password must be at least 8 characters.",
     }),
     confirmPassword: z.string(),
     // dob: z.date().optional(),
-    })
-    .refine((data) => data.password === data.confirmPassword, {
-      message: "Passwords don't match",
-      path: ["confirmPassword"],
-    });
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -116,7 +117,7 @@ export default function RegisterPage() {
         });
         return;
       }
-      if (userType === "patient"){
+      if (userType === "patient") {
         const response = await fetch(`${localHost}/create_${userType}`, {
           method: "POST",
           headers: {
@@ -138,9 +139,8 @@ export default function RegisterPage() {
             variant: "destructive",
           });
           return;
-        }  
-      }
-      else{
+        }
+      } else {
         const response = await fetch(`${localHost}/create_${userType}`, {
           method: "POST",
           headers: {
@@ -162,9 +162,9 @@ export default function RegisterPage() {
             variant: "destructive",
           });
           return;
-        }  
+        }
       }
-      
+
       toast({
         title: "Registration successful",
         description: "Please check your email to confirm your account.",
@@ -279,19 +279,19 @@ export default function RegisterPage() {
               </div>
               {userType == "doctor" && (
                 <div className="grid gap-4">
-                <FormField
-                  control={form.control}
-                  name="specialty"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Specialty*</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Surgeon" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={form.control}
+                    name="specialty"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Specialty*</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Surgeon" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
               )}
 
@@ -334,6 +334,7 @@ export default function RegisterPage() {
                   />
                 </div>
               )}
+
 
               <div className="grid gap-4 md:grid-cols-2">
                 <FormField

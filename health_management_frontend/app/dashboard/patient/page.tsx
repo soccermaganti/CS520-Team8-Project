@@ -75,7 +75,7 @@ export default function PatientDashboard() {
     })
   );
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  
+
   const [currentUser, setCurrentUser] = useState<SupabaseUser | null>(null);
   useEffect(() => {
     const fetchUser = async () => {
@@ -86,7 +86,7 @@ export default function PatientDashboard() {
     };
     fetchUser();
   },[]);
-  
+
 
   // Mock data for the patient
   // TODO: Replace with actual data fetching logic
@@ -112,7 +112,7 @@ export default function PatientDashboard() {
       const { data, error } = await supabase
         .from("Info")
         .select("*")
-        .eq("email", currentUser.email)
+        .eq("email", currentUser?.email)
         .single();
 
       if (error) {
@@ -134,7 +134,7 @@ export default function PatientDashboard() {
       const { data, error } = await supabase
         .from("Patient")
         .select("name, email, phone_num")
-        .eq("email", currentUser)
+        .eq("email", currentUser?.email)
         .single();
 
       if (error) {
@@ -155,7 +155,7 @@ export default function PatientDashboard() {
       const { data, error } = await supabase
         .from("Appointment")
         .select("*")
-        .eq("patient_email", currentUser)
+        .eq("patient_email", currentUser?.email)
         .order("appt_date", { ascending: true });
 
       if (!error) {
@@ -180,50 +180,50 @@ export default function PatientDashboard() {
 
   // Mock data for appointments
   // const appointments = [
-  //   {
-  //     type: "Check-up",
-  //     date: "May 28, 2023",
-  //     time: "10:30 AM",
-  //     doctor: "Dr. USER2",
-  //     location: "Main Hospital, Room 302",
-  //   },
-  //   {
-  //     type: "Blood Test",
-  //     date: "June 5, 2023",
-  //     time: "9:00 AM",
-  //     doctor: "Dr. USER3",
-  //     location: "Lab Center, Floor 1",
-  //   },
-  //   {
-  //     type: "Physical Therapy",
-  //     date: "June 12, 2023",
-  //     time: "2:15 PM",
-  //     doctor: "Dr. USER4",
-  //     location: "Rehabilitation Center",
-  //   },
+  //		{
+  //			type: "Check-up",
+  //			date: "May 28, 2023",
+  //			time: "10:30 AM",
+  //			doctor: "Dr. USER2",
+  //			location: "Main Hospital, Room 302",
+  //		},
+  //		{
+  //			type: "Blood Test",
+  //			date: "June 5, 2023",
+  //			time: "9:00 AM",
+  //			doctor: "Dr. USER3",
+  //			location: "Lab Center, Floor 1",
+  //		},
+  //		{
+  //			type: "Physical Therapy",
+  //			date: "June 12, 2023",
+  //			time: "2:15 PM",
+  //			doctor: "Dr. USER4",
+  //			location: "Rehabilitation Center",
+  //		},
   // ]
   // const appointments = [
-  //   {
-  //     type: "Check-up",
-  //     date: "May 28, 2023",
-  //     time: "10:30 AM",
-  //     doctor: "Dr. USER2",
-  //     location: "Main Hospital, Room 302",
-  //   },
-  //   {
-  //     type: "Blood Test",
-  //     date: "June 5, 2023",
-  //     time: "9:00 AM",
-  //     doctor: "Dr. USER3",
-  //     location: "Lab Center, Floor 1",
-  //   },
-  //   {
-  //     type: "Physical Therapy",
-  //     date: "June 12, 2023",
-  //     time: "2:15 PM",
-  //     doctor: "Dr. USER4",
-  //     location: "Rehabilitation Center",
-  //   },
+  //		{
+  //			type: "Check-up",
+  //			date: "May 28, 2023",
+  //			time: "10:30 AM",
+  //			doctor: "Dr. USER2",
+  //			location: "Main Hospital, Room 302",
+  //		},
+  //		{
+  //			type: "Blood Test",
+  //			date: "June 5, 2023",
+  //			time: "9:00 AM",
+  //			doctor: "Dr. USER3",
+  //			location: "Lab Center, Floor 1",
+  //		},
+  //		{
+  //			type: "Physical Therapy",
+  //			date: "June 12, 2023",
+  //			time: "2:15 PM",
+  //			doctor: "Dr. USER4",
+  //			location: "Rehabilitation Center",
+  //		},
   // ]
 
   // Health metrics data
@@ -255,9 +255,9 @@ export default function PatientDashboard() {
       icon: <FileText className="h-6 w-6" />,
       link: "/dashboard/patient/records",
       color: "bg-purple-100",
-    }
+    },
   ];
-  
+
   useEffect(() => {
     const fetchAppointments = async () => {
       if (currentUser?.email) {
@@ -322,8 +322,8 @@ export default function PatientDashboard() {
               Medications
             </NavItem>
             <NavItem href="/dashboard/patient/doctors" icon={<Clipboard />}>
-                Doctors
-              </NavItem>
+                 Doctors
+               </NavItem>
           </div>
           <div className="absolute bottom-0 w-64 border-t border-gray-200">
             <NavItem href="/dashboard/patient/settings" icon={<Settings />}>
@@ -456,12 +456,12 @@ export default function PatientDashboard() {
                         <Clock className="h-5 w-5 text-teal-600" />
                       </div>
                       <div>
-                        <p className="font-medium">{appointment.type}</p>
+                        <p className="font-medium">{appointment.appt_type}</p>
                         <p className="text-sm text-gray-500">
-                          {appointment.date} at {appointment.time}
+                          {appointment.appt_date} at {appointment.appt_time}
                         </p>
                         <p className="text-sm text-gray-500">
-                          {appointment.doctor}
+                          {appointment.doctor_email}
                         </p>
                       </div>
                     </div>
