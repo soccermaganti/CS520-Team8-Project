@@ -6,7 +6,7 @@ export default function Home() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-teal-50 to-cyan-50 p-4">
       <div className="max-w-md text-center">
-        <h1 className="mb-4 text-4xl font-bold text-teal-600">MedC</h1>
+        <h1 className="mb-4 text-4xl font-bold text-teal-600">CentraHealth</h1>
         <p className="mb-8 text-lg text-gray-600">
           Welcome to our modern management platform. Please register or login to
           continue.

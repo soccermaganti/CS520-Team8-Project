@@ -10,6 +10,7 @@ import {
   Calendar,
   FileText,
   Pill,
+  Clipboard,
   CreditCard,
   Settings,
   LogOut,
@@ -30,7 +31,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { format } from "date-fns"
 import { createClient } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation';
-
+import {supabase} from "../../../supabaseClient"
 
 
 export default function MedicalRecordsDashboard() {
@@ -42,76 +43,67 @@ export default function MedicalRecordsDashboard() {
   const [accountNameL, setAccountNameL] = useState(null);
 
 
-  const supabase = createClient(
-    'https://niqomrgbdcegxorlifel.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pcW9tcmdiZGNlZ3hvcmxpZmVsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE1NTM4MTcsImV4cCI6MjA1NzEyOTgxN30.6qAVJlUjbd-JnEDMBNPdyavb_-97HZcB7ECvmX7Pfus' // Use this securely server-side
-  )
-  const router = useRouter();
-
-
-
-
-//   const hexToBlob = (hex: string, mimeType: string): Blob => {
-//     const bytes = new Uint8Array(
-//       hex.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || []
-//     );
-//     return new Blob([bytes], { type: mimeType });
-//   };
+//	 const hexToBlob = (hex: string, mimeType: string): Blob => {
+//		const bytes = new Uint8Array(
+//			hex.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || []
+//		);
+//		return new Blob([bytes], { type: mimeType });
+//	 };
 
   // Function to handle PDF download
-//   const handleDownload = async (fileName: string, bytea: string) => {
-//     try {
-//       const blob = hexToBlob(bytea, "application/pdf");
-//       const url = URL.createObjectURL(blob);
-//       const a = document.createElement("a");
-//       a.href = url;
-//       a.download = fileName;
-//       document.body.appendChild(a);
-//       a.click();
-//       document.body.removeChild(a);
-//       URL.revokeObjectURL(url);
-//     } catch (error) {
-//       console.error("Error downloading the file:", error);
-//     }
-//   };
+//	 const handleDownload = async (fileName: string, bytea: string) => {
+//		try {
+//			const blob = hexToBlob(bytea, "application/pdf");
+//			const url = URL.createObjectURL(blob);
+//			const a = document.createElement("a");
+//			a.href = url;
+//			a.download = fileName;
+//			document.body.appendChild(a);
+//			a.click();
+//			document.body.removeChild(a);
+//			URL.revokeObjectURL(url);
+//		} catch (error) {
+//			console.error("Error downloading the file:", error);
+//		}
+//	 };
 
 // const hexToBlob = (hex: string, mimeType: string): Blob => {
-//     // Remove the `\\x` prefix if present
-//     if (hex.startsWith("\\x")) {
-//       hex = hex.slice(2);
-//     }
-  
-//     // Convert hex string to binary data
-//     const bytes = new Uint8Array(
-//       hex.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || []
-//     );
-  
-//     // Create a Blob with the binary data
-//     return new Blob([bytes], { type: mimeType });
-//   };
-  
-//   const handleDownload = (fileName: string, bytea: string) => {
-//     try {
-//       // Convert bytea (hex string) to Blob
-//       const blob = hexToBlob(bytea, "application/pdf");
-  
-//       // Create a URL for the Blob
-//       const url = URL.createObjectURL(blob);
-  
-//       // Create a temporary anchor element to trigger the download
-//       const a = document.createElement("a");
-//       a.href = url;
-//       a.download = fileName;
-//       document.body.appendChild(a);
-//       a.click();
-  
-//       // Clean up
-//       document.body.removeChild(a);
-//       URL.revokeObjectURL(url);
-//     } catch (error) {
-//       console.error("Failed to download PDF:", error);
-//     }
-//   };
+//		// Remove the `\\x` prefix if present
+//		if (hex.startsWith("\\x")) {
+//			hex = hex.slice(2);
+//		}
+
+//		// Convert hex string to binary data
+//		const bytes = new Uint8Array(
+//			hex.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || []
+//		);
+
+//		// Create a Blob with the binary data
+//		return new Blob([bytes], { type: mimeType });
+//	 };
+
+//	 const handleDownload = (fileName: string, bytea: string) => {
+//		try {
+//			// Convert bytea (hex string) to Blob
+//			const blob = hexToBlob(bytea, "application/pdf");
+
+//			// Create a URL for the Blob
+//			const url = URL.createObjectURL(blob);
+
+//			// Create a temporary anchor element to trigger the download
+//			const a = document.createElement("a");
+//			a.href = url;
+//			a.download = fileName;
+//			document.body.appendChild(a);
+//			a.click();
+
+//			// Clean up
+//			document.body.removeChild(a);
+//			URL.revokeObjectURL(url);
+//		} catch (error) {
+//			console.error("Failed to download PDF:", error);
+//		}
+//	 };
 
 
   useEffect(() => {
@@ -132,86 +124,84 @@ export default function MedicalRecordsDashboard() {
 
   }, []);
 // function convertByteaToBlobUrl(byteaHex: string, mimeType: string = "application/pdf"): string | null {
-//     if (!byteaHex || !byteaHex.startsWith("\\x")) {
-//       console.warn("Invalid bytea hex string.");
-//       return null;
-//     }
-  
-//     try {
-//       const hex = byteaHex.slice(2); // Remove \x prefix
-//       const binary = new Uint8Array(hex.length / 2);
-  
-//       for (let i = 0; i < binary.length; i++) {
-//         binary[i] = parseInt(hex.substr(i * 2, 2), 16);
-//       }
-  
-//       const blob = new Blob([binary], { type: mimeType });
-//       return URL.createObjectURL(blob);
-//     } catch (error) {
-//       console.error("Failed to convert bytea to Blob:", error);
-//       return null;
-//     }
-//   }
+//		if (!byteaHex || !byteaHex.startsWith("\\x")) {
+//			console.warn("Invalid bytea hex string.");
+//			return null;
+//		}
 
-//   function base64ToBlob(base64: string, type = 'application/pdf') {
-//     // const binary = atob(base64)
-//     // const bytes = new Uint8Array(base64.length)
-//     // for (let i = 0; i < binary.length; i++) {
-//     //   bytes[i] = binary.charCodeAt(i)
-//     // }
-//     return new Blob([base64], { type })
-//   }
-  
-  
-  
-  
+//		try {
+//			const hex = byteaHex.slice(2); // Remove \x prefix
+//			const binary = new Uint8Array(hex.length / 2);
 
-//   useEffect(() => {
-//     const fetchMedicalRecords = async () => {
-//         console.log('fniefn')
-//       const { data, error } = await supabase
-//         .from('medical_records')  // <-- replace with your actual table name
-//         .select(`*`).eq("email", currentUser?.email);;
-  
-//       if (error) {
-//         console.error('Error fetching medical records:', error);
-//         return;
-//       }
+//			for (let i = 0; i < binary.length; i++) {
+//				binary[i] = parseInt(hex.substr(i * 2, 2), 16);
+//			}
 
-//       console.log("Medical records:", data);
+//			const blob = new Blob([binary], { type: mimeType });
+//			return URL.createObjectURL(blob);
+//		} catch (error) {
+//			console.error("Failed to convert bytea to Blob:", error);
+//			return null;
+//		}
+//	 }
 
-//       const formatted = await Promise.all(
-//         data.map(async (record: any, index: number) => {
-//           let fileUrl = null;
-  
-//           if (record.filePath) {
-//             const { data: fileData } = supabase.storage
-//               .from("test-doc")
-//               .getPublicUrl(record.filePath);
-//             fileUrl = fileData?.publicUrl || null;
-//           }
-  
-//           return {
-//             id: record.id || (index + 1).toString(),
-//             recordId: record.email_doc,
-//             date: record.date,
-//             name: record.name,
-//             noteType: record.noteType,
-//             author: record.author,
-//             lastUpdated: record.lastUpdated || record.date,
-//             updatedBy: record.updatedBy || record.author,
-//             fileType: record.fileType,
-//             fileName: record.fileName,
-//             fileData: fileUrl, // used for download/view
-//           };
-//         })
-//       );
-  
-//       setRecords(formatted);
-//     };
-  
-//     fetchMedicalRecords();
-//   }, []);
+//		function base64ToBlob(base64: string, type = 'application/pdf') {
+//			// const binary = atob(base64)
+//			// const bytes = new Uint8Array(base64.length)
+//			// for (let i = 0; i < binary.length; i++) {
+//			//		bytes[i] = binary.charCodeAt(i)
+//			// }
+//			return new Blob([base64], { type })
+//		}
+
+
+
+//	 useEffect(() => {
+//			const fetchMedicalRecords = async () => {
+//					console.log('fniefn')
+//				const { data, error } = await supabase
+//					.from('medical_records')	// <-- replace with your actual table name
+//					.select(`*`).eq("email", currentUser?.email);;
+
+//				if (error) {
+//					console.error('Error fetching medical records:', error);
+//					return;
+//				}
+
+//				console.log("Medical records:", data);
+
+//				const formatted = await Promise.all(
+//					data.map(async (record: any, index: number) => {
+//						let fileUrl = null;
+
+//						if (record.filePath) {
+//							const { data: fileData } = supabase.storage
+//								.from("test-doc")
+//								.getPublicUrl(record.filePath);
+//							fileUrl = fileData?.publicUrl || null;
+//						}
+
+//						return {
+//							id: record.id || (index + 1).toString(),
+//							recordId: record.email_doc,
+//							date: record.date,
+//							name: record.name,
+//							noteType: record.noteType,
+//							author: record.author,
+//							lastUpdated: record.lastUpdated || record.date,
+//							updatedBy: record.updatedBy || record.author,
+//							fileType: record.fileType,
+//							fileName: record.fileName,
+//							fileData: fileUrl, // used for download/view
+//						};
+//					})
+//				);
+
+//				setRecords(formatted);
+//			};
+
+//			fetchMedicalRecords();
+//		}, []);
 
   const fetchUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -227,25 +217,25 @@ export default function MedicalRecordsDashboard() {
         data: { user },
         error: userError,
       } = await supabase.auth.getUser();
-  
+
       if (userError) {
         console.error("Failed to fetch user:", userError);
         return;
       }
-  
+
       setCurrentUser(user);
-  
+
       // Step 2: Now fetch medical records using user's email
       const { data: recordsData, error: recordsError } = await supabase
         .from("medical_records")
         .select("*")
         .eq("email", user?.email);
-  
+
       if (recordsError) {
         console.error("Error fetching medical records:", recordsError);
         return;
       }
-  
+
       const formatted = await Promise.all(
         recordsData.map(async (record: any, index: number) => {
           let fileUrl = null;
@@ -255,7 +245,7 @@ export default function MedicalRecordsDashboard() {
               .getPublicUrl(record.filePath);
             fileUrl = fileData?.publicUrl || null;
           }
-  
+
           return {
             id: record.id || (index + 1).toString(),
             recordId: record.email_doc,
@@ -271,51 +261,48 @@ export default function MedicalRecordsDashboard() {
           };
         })
       );
-  
+
       setRecords(formatted);
     };
-  
+
     fetchData();
   }, []);
-  
 
-  
-  
-  
 
-//   useEffect(() => {
-//     const fetchUser = async () => {
-//       const { data: { user } } = await supabase.auth.getUser();
-//       setCurrentUser(user);
-//       console.log('kmfelm12',user);
 
-//     };
 
-    
+//	 useEffect(() => {
+//			const fetchUser = async () => {
+//				const { data: { user } } = await supabase.auth.getUser();
+//				setCurrentUser(user);
+//				console.log('kmfelm12',user);
 
-//     // const fetchRecords = async () => {
-//     //   const { data, error } = await supabase.from("Records").select("name, email");
-//     //   if (!error) {
-//     //     const doctorMap: { [key: string]: string } = {};
-//     //     data.forEach(doctor => {
-//     //       doctorMap[doctor.name] = doctor.email;
-//     //     });
-//     //     setDoctors(doctorMap);
-//     //     // print('kmfelm',data,doctorMap)
-//     //     console.log('kmfelm',data,doctorMap);
-//     //   } else {
-//     //     console.error("Error fetching doctors:", error);
-//     //   }
-//     // };
+//			};
 
-//     fetchUser();
-//     // fetchDoctors();
 
-//   }, []);
+//			// const fetchRecords = async () => {
+//			//		const { data, error } = await supabase.from("Records").select("name, email");
+//			//		if (!error) {
+//			//			const doctorMap: { [key: string]: string } = {};
+//			//			data.forEach(doctor => {
+//			//				doctorMap[doctor.name] = doctor.email;
+//			//			});
+//			//			setDoctors(doctorMap);
+//			//			// print('kmfelm',data,doctorMap)
+//			//			console.log('kmfelm',data,doctorMap);
+//			//		} else {
+//			//			console.error("Error fetching doctors:", error);
+//			//		}
+//			// };
+
+//			fetchUser();
+//			// fetchDoctors();
+
+//		}, []);
 
 // useEffect(() => {
 
-//     console.log('kmfelm');
+//			console.log('kmfelm');
 
 
 // }, [currentUser,doctors]);
@@ -348,12 +335,12 @@ export default function MedicalRecordsDashboard() {
       alert("Please upload a file");
       return;
     }
-  
+
     const today = new Date();
     const formattedDate = format(today, "MM/dd/yyyy");
-  
+
     const filePath = `${crypto.randomUUID()}`;
-  
+
     const { data: uploadData, error: uploadError } = await supabase
       .storage
       .from("test-doc")
@@ -362,7 +349,7 @@ export default function MedicalRecordsDashboard() {
         upsert: false,
       });
       console.log('inside upload')
-  
+
     if (uploadError) {
       console.error("Upload error:", uploadError);
       alert("Failed to upload file");
@@ -373,32 +360,32 @@ export default function MedicalRecordsDashboard() {
 if (accountName) fullNameParts.push(accountName);
 if (accountNameL) fullNameParts.push(accountNameL);
 const fullName = fullNameParts.join(' ');
-  
+
     const { error: insertError } = await supabase
       .from("medical_records")
     .insert([
-        {
-            email_doc: newRecord.recordId,
-            name: fullName,
-            noteType: newRecord.noteType,
-            author: newRecord.author,
-            date: formattedDate,
-            lastUpdated: formattedDate,
-            updatedBy: newRecord.author,
-            fileType:  "application/pdf",
-            fileName: newRecord.file.name,
-            filePath: filePath, // ⬅️ save the path instead of binary
-            email: currentUser?.email,
-            name_doc: newRecord.name
-        },
+      {
+        email_doc: newRecord.recordId,
+        name: fullName,
+        noteType: newRecord.noteType,
+        author: newRecord.author,
+        date: formattedDate,
+        lastUpdated: formattedDate,
+        updatedBy: newRecord.author,
+        fileType: "application/pdf",
+        fileName: newRecord.file.name,
+        filePath: filePath, // ⬅️ save the path instead of binary
+        email: currentUser?.email,
+        name_doc: newRecord.name
+      },
     ]);
-  
+
     if (insertError) {
       console.error("Insert error:", insertError);
       alert("Failed to save metadata");
       return;
     }
-  
+
     setNewRecord({
       recordId: "",
       name: "",
@@ -411,10 +398,8 @@ const fullName = fullNameParts.join(' ');
     window.location.reload(); // or router.refresh() if using App Router
 
   };
-  
 
-  
-  
+
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -455,9 +440,9 @@ const fullName = fullNameParts.join(' ');
             <NavItem href="/dashboard/patient/medications" icon={<Pill />}>
               Medications
             </NavItem>
-            <NavItem href="/dashboard/patient/bills" icon={<CreditCard />}>
-              Bills
-            </NavItem>
+            <NavItem href="/dashboard/patient/doctors" icon={<Clipboard />}>
+                 Doctors
+               </NavItem>
           </div>
           <div className="absolute bottom-0 w-64 border-t border-gray-200">
             <NavItem href="/dashboard/patient/settings" icon={<Settings />}>
@@ -556,7 +541,7 @@ const fullName = fullNameParts.join(' ');
                         <td className="py-3 px-4">
                           {record.fileName ? (
                             <span className="text-sm text-gray-600">
-                              {record.fileName} 
+                              {record.fileName}
                             </span>
                           ) : (
                             <span className="text-sm text-gray-400">No file</span>
@@ -568,23 +553,23 @@ const fullName = fullNameParts.join(' ');
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleDownload({
-                                    name: record.fileName ?? "",
-                                    date: record.date,
-                                    author: record.author,
-                                    noteType: record.noteType,
-                                    fileType: "pdf",
-                                    fileName: record.fileName,
-                                    fileSize: "",
-                                    fileData: record.fileData,
-                                    recordId: record.recordId
+                                  name: record.fileName ?? "",
+                                  date: record.date,
+                                  author: record.author,
+                                  noteType: record.noteType,
+                                  fileType: "pdf",
+                                  fileName: record.fileName,
+                                  fileSize: "",
+                                  fileData: record.fileData,
+                                  recordId: record.recordId
                                 })}
                                 disabled={!record.fileData}
                                 className={!record.fileData ? "cursor-not-allowed opacity-50" : ""}
                                 title={!record.fileData ? "No file available" : "Download file"}
-                            >
+                              >
                                 <Download className="h-4 w-4 mr-1" />
                                 Download
-                            </Button>
+                              </Button>
                             {/* <Button variant="outline" size="sm">
                               <Printer className="h-4 w-4 mr-1" />
                               Print

@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Bell,
   Mail,
   LogOut,
+  Home,
   User,
+  Pill,
   Calendar,
   FileText,
   Users,
@@ -14,27 +16,15 @@ import {
   Settings,
   Search,
 } from "lucide-react";
-import {
-  Avatar,
-  AvatarFallback,
-} from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  RadioGroup,
-  RadioGroupItem,
-} from "@/components/ui/radio-group";
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
+import { supabase } from "../../supabaseClient";
 
 export default function DoctorDashboard() {
   const [currentDate] = useState(
@@ -47,42 +37,191 @@ export default function DoctorDashboard() {
       year: "numeric",
     })
   );
+  const [currentUser, setCurrentUser] = useState(null);
 
-  const [activeVerticalTab, setActiveVerticalTab] = useState("demographics");
-  const [activeHorizontalTab, setActiveHorizontalTab] = useState("vitals");
+  useEffect(() => {
+    const fetchUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setCurrentUser(user);
+    };
+
+    fetchUser();
+  }, []);
+
+  const [doctorEmail, setDoctorEmail] = useState("");
+  useEffect(() => {
+    const fetchDoctor = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        console.error("Error fetching patient");
+      } else {
+        // Set the patient data in state or use it directly
+        console.log("Patient data:", user);
+        setDoctorEmail(user.email.toString());
+      }
+    };
+    fetchDoctor();
+  }, []);
+  // console.log(`Patient email: ${patientEmail}-${typeof patientEmail}`);
+  const [doctorName, setDoctorName] = useState("");
+  useEffect(() => {
+    // const currentPatientId = localStorage.getItem("user") || "{}";
+    // const parsedID = JSON.parse(currentPatientId);
+    // console.log("Parsed ID:", parsedID)
+    const fetchDoctor = async () => {
+      const { data, error } = await supabase
+        .from("Doctor")
+        .select("name")
+        .eq("email", doctorEmail)
+        .single();
+
+      if (error) {
+        console.error("Error fetching doctor:", error);
+      } else {
+        // Set the patient data in state or use it directly
+        console.log("Doctor Name:", data);
+        setDoctorName(data.name);
+      }
+    };
+    fetchDoctor();
+  }, [doctorEmail]);
+  const [patientDoctors, setPatientDoctors] = useState<
+    { doctor_email: string; patient_email: string; accepted: boolean }[]
+  >([]);
+  // const [updated, setUpdated] = useState(false)
+  useEffect(() => {
+    const fetchPatientDoctors = async () => {
+      const { data, error } = await supabase
+        .from("Patient-Doctor")
+        .select("*")
+        .eq("doctor_email", doctorEmail)
+        .eq("accepted", true);
+      if (error) {
+        console.error("Error fetching doctors:", error);
+      } else {
+        // Set the doctor data in state or use it directly
+        console.log("Doctor data:", data);
+        setPatientDoctors(data);
+      }
+    };
+    fetchPatientDoctors();
+  }, [doctorEmail, doctorName]);
+
+  const [selectedPatient, setSelectedPatient] = useState("");
+
+  const [formData, setFormData] = useState({
+    weight: 0.0,
+    height: 0.0,
+    bpm: 0,
+    activity_level: "",
+    blood_pressure: "",
+    age: 0,
+    email: "",
+    temp: 0.0,
+  });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (selectedPatient == "") {
+      alert("Please select a patient to add or update informatio on");
+      return;
+    }
+    formData.email = selectedPatient.split(",")[1];
+    console.log(`Selected Doctor Info ${formData}`);
+
+    // setLoading(true)
+    const { error } = await supabase.from("Info").select("*");
+
+    if (error) {
+      const { error } = await supabase.from("Info").insert([formData]);
+
+      if (error) {
+        console.error(
+          "Insert failed:",
+          error.message,
+          error.details,
+          error.hint
+        );
+        alert("Information for patient already exists");
+      } else {
+        alert(`Added metrics for ${selectedPatient.split(",")[0]}`);
+      }
+    } else {
+      // Remove keys with no form values
+      let temp = {}
+      Object.keys(formData).forEach((key) => {
+        if (formData[key] !== 0 || formData[key] !== "") {
+          temp[key] = formData[key];
+        }
+      });
+      setFormData(temp)
+      const { error } = await supabase
+        .from("Info")
+        .update([formData])
+        .eq("email", formData.email);
+
+      if (error) {
+        console.error(
+          "Update failed:",
+          error.message,
+          error.details,
+          error.hint
+        );
+        alert("Unable to process changes");
+      } else {
+        alert(`Updated metrics for ${selectedPatient.split(",")[0]}`);
+        setFormData({ weight: 0.0, height: 0.0, bpm: 0, activity_level: "", blood_pressure: "", age: 0, email: "", temp: 0.0 });
+      }
+    }
+  };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-100">
       {/* Sidebar */}
-      <div className="w-60 bg-white border-r border-gray-200 flex flex-col">
+      <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
         <div className="p-6 border-b border-gray-200">
-          <h1 className="text-2xl font-bold text-teal-500">MedC</h1>
+          <h1 className="text-2xl font-bold text-teal-600">CentraHealth</h1>
         </div>
+
+        <div className="p-4 border-b border-gray-200">
+          <div className="flex items-center space-x-3">
+            <Avatar>
+              <AvatarFallback>
+                {currentUser?.email
+                  ? currentUser.email.substring(0, 2).toUpperCase()
+                  : "DR"}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="font-medium">{currentUser?.email || "Doctor"}</p>
+              <p className="text-xs text-gray-500">Doctor</p>
+            </div>
+          </div>
+        </div>
+
         <nav className="flex-1 pt-4">
           <div className="space-y-1">
-            <NavItem href="/dashboard/doctor" icon={<User />}>
-              Profile
+            <NavItem href="/dashboard/doctor" icon={<Home />} active>
+              Check-Up Form
             </NavItem>
             <NavItem href="/dashboard/doctor/appointments" icon={<Calendar />}>
               Appointments
             </NavItem>
-            <NavItem href="/dashboard/doctor/patients" icon={<Users />} active>
+            <NavItem href="/dashboard/doctor/patients" icon={<Calendar />}>
               Patients
             </NavItem>
             <NavItem href="/dashboard/doctor/records" icon={<FileText />}>
               Records
             </NavItem>
-            <NavItem
-              href="/dashboard/doctor/prescriptions"
-              icon={<Clipboard />}
-            >
-              Prescriptions
+            <NavItem href="/dashboard/doctor/prescribe" icon={<Pill />}>
+              Prescribe
             </NavItem>
           </div>
-          <div className="absolute bottom-0 w-60 border-t border-gray-200">
-            <NavItem href="/dashboard/doctor/settings" icon={<Settings />}>
-              Settings
-            </NavItem>
+          <div className="absolute bottom-0 w-64 border-t border-gray-200">
             <NavItem href="/login" icon={<LogOut />}>
               Log Out
             </NavItem>
@@ -92,470 +231,161 @@ export default function DoctorDashboard() {
 
       {/* Main content */}
       <div className="flex-1 overflow-auto">
-        {/* Header */}
-        <header className="bg-white border-b border-gray-200 p-4 flex items-center justify-between">
-          <div className="relative w-64">
-            <Input placeholder="Search..." className="pl-10" />
-            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-              <Search className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="text-gray-600">{currentDate}</div>
-          <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-0 right-0 h-2 w-2 bg-orange-400 rounded-full"></span>
-            </Button>
-            <Button variant="ghost" size="icon" className="relative">
-              <Mail className="h-5 w-5" />
-              <span className="absolute top-0 right-0 h-2 w-2 bg-teal-500 rounded-full"></span>
-            </Button>
-            <Avatar>
-              <AvatarFallback>DR</AvatarFallback>
-            </Avatar>
-          </div>
-        </header>
-
         {/* Content */}
         <main className="p-6">
-          <h1 className="text-2xl font-bold mb-6">Data Entry Screen</h1>
+          <h1 className="text-2xl font-bold mb-6">Patient Checkup Form</h1>
 
           <div className="flex">
-            {/* Vertical Tabs */}
-            <div className="w-48 mr-6">
-              <Card>
-                <CardContent className="p-0">
-                  <div className="flex flex-col">
-                    {[
-                      { id: "demographics", label: "Demographics" },
-                      { id: "living", label: "Living/Arrival" },
-                      { id: "supportive", label: "Supportive" },
-                      { id: "summary", label: "Summary" },
-                      { id: "problem", label: "Problem" },
-                      { id: "recovery", label: "Recovery/Military" },
-                      { id: "respiratory", label: "Respiratory" },
-                      { id: "cardiovascular", label: "Cardiovascular" },
-                      { id: "gi", label: "GI/GU" },
-                      { id: "endocrine", label: "Endocrine" },
-                      { id: "neuro", label: "Neuro/Psych" },
-                      { id: "musculoskeletal", label: "Musculoskeletal" },
-                      { id: "adl", label: "ADL/IADLs" },
-                      { id: "nutrition", label: "Nutrition" },
-                      { id: "medications", label: "Medications" },
-                      { id: "equipment", label: "Equipment" },
-                      { id: "care", label: "Care Planning" },
-                      { id: "therapy", label: "Therapy Need" },
-                      { id: "discharge", label: "Discharge" },
-                      { id: "death", label: "Death/Psych" },
-                      { id: "narrative", label: "Narrative" },
-                    ].map((tab) => (
-                      <button
-                        key={tab.id}
-                        className={`text-left px-4 py-2 text-sm border-b border-gray-200 ${
-                          activeVerticalTab === tab.id
-                            ? "bg-teal-50 text-teal-600 font-medium border-l-4 border-l-teal-500"
-                            : "text-gray-700 hover:bg-gray-50"
-                        }`}
-                        onClick={() => setActiveVerticalTab(tab.id)}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
             {/* Main Content Area */}
             <div className="flex-1">
               <Card>
                 <CardContent className="p-6">
-                  <div className="mb-4">
-                    <h2 className="text-lg font-medium mb-2">Primary</h2>
-
-                    {/* Horizontal Tabs */}
-                    <Tabs
-                      defaultValue="vitals"
-                      className="w-full"
-                      onValueChange={setActiveHorizontalTab}
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <select
+                      id="doctor"
+                      className="w-full border border-gray-300 rounded-md p-2"
+                      onChange={(e) => {
+                        setSelectedPatient(e.target.value);
+                      }}
                     >
-                      <TabsList className="grid grid-cols-6 w-full">
-                        <TabsTrigger value="vitals">Vitals</TabsTrigger>
-                        <TabsTrigger value="dent">DENT</TabsTrigger>
-                        <TabsTrigger value="pain">Pain</TabsTrigger>
-                        <TabsTrigger value="m1200">M1200-1220</TabsTrigger>
-                        <TabsTrigger value="m1230">M1230</TabsTrigger>
-                        <TabsTrigger value="m1240">M1240-M1242</TabsTrigger>
-                      </TabsList>
-                    </Tabs>
-                  </div>
-
-                  {/* Patient Info */}
-                  <div className="mb-6 flex items-center justify-between">
-                    <div>
-                      <Label className="text-sm font-medium">
-                        Patient Name
-                      </Label>
-                      <div className="flex mt-1">
+                      <option value="">-- Select a Patient --</option>
+                      {patientDoctors.map((pairing) => (
+                        <option
+                          key={pairing.patient_email}
+                          value={[pairing.patient_name, pairing.patient_email]}
+                        >
+                          {pairing.patient_name} ({pairing.patient_email})
+                        </option>
+                      ))}
+                    </select>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="height">Height (ft)</Label>
                         <Input
-                          className="w-64 mr-2"
-                          placeholder="Patient name"
-                        />
-                        <Button variant="outline" className="mr-2">
-                          Docs
-                        </Button>
-                        <Button variant="outline">Risks</Button>
-                      </div>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button variant="outline">Save</Button>
-                      <Button variant="outline">Cancel</Button>
-                      <Button variant="outline">Exit</Button>
-                    </div>
-                  </div>
-
-                  {/* Vitals Form */}
-                  {activeHorizontalTab === "vitals" && (
-                    <div className="space-y-6">
-                      {/* Pulse & Apical */}
-                      <div className="grid grid-cols-2 gap-8">
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between">
-                            <Label className="text-sm font-medium">Pulse</Label>
-                            <div className="flex items-center space-x-4">
-                              <div className="flex items-center space-x-2">
-                                <RadioGroup defaultValue="regular">
-                                  <div className="flex items-center space-x-2">
-                                    <RadioGroupItem
-                                      value="regular"
-                                      id="pulse-regular"
-                                    />
-                                    <Label htmlFor="pulse-regular">
-                                      Regular
-                                    </Label>
-                                  </div>
-                                </RadioGroup>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <RadioGroup defaultValue="regular">
-                                  <div className="flex items-center space-x-2">
-                                    <RadioGroupItem
-                                      value="irregular"
-                                      id="pulse-irregular"
-                                    />
-                                    <Label htmlFor="pulse-irregular">
-                                      Irregular
-                                    </Label>
-                                  </div>
-                                </RadioGroup>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <RadioGroup defaultValue="regular">
-                                  <div className="flex items-center space-x-2">
-                                    <RadioGroupItem
-                                      value="not-answered"
-                                      id="pulse-not-answered"
-                                    />
-                                    <Label htmlFor="pulse-not-answered">
-                                      Not Answered
-                                    </Label>
-                                  </div>
-                                </RadioGroup>
-                              </div>
-                            </div>
-                          </div>
-                          <Input placeholder="Enter pulse rate" />
-                        </div>
-
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between">
-                            <Label className="text-sm font-medium">
-                              Apical
-                            </Label>
-                            <div className="flex items-center space-x-4">
-                              <div className="flex items-center space-x-2">
-                                <RadioGroup defaultValue="regular">
-                                  <div className="flex items-center space-x-2">
-                                    <RadioGroupItem
-                                      value="regular"
-                                      id="apical-regular"
-                                    />
-                                    <Label htmlFor="apical-regular">
-                                      Regular
-                                    </Label>
-                                  </div>
-                                </RadioGroup>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <RadioGroup defaultValue="regular">
-                                  <div className="flex items-center space-x-2">
-                                    <RadioGroupItem
-                                      value="irregular"
-                                      id="apical-irregular"
-                                    />
-                                    <Label htmlFor="apical-irregular">
-                                      Irregular
-                                    </Label>
-                                  </div>
-                                </RadioGroup>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <RadioGroup defaultValue="regular">
-                                  <div className="flex items-center space-x-2">
-                                    <RadioGroupItem
-                                      value="not-answered"
-                                      id="apical-not-answered"
-                                    />
-                                    <Label htmlFor="apical-not-answered">
-                                      Not Answered
-                                    </Label>
-                                  </div>
-                                </RadioGroup>
-                              </div>
-                            </div>
-                          </div>
-                          <Input placeholder="Enter apical rate" />
-                        </div>
-                      </div>
-
-                      {/* Blood Pressure */}
-                      <div>
-                        <Label className="text-sm font-medium">
-                          Blood Pressure
-                        </Label>
-                        <div className="grid grid-cols-2 gap-8 mt-2">
-                          <div>
-                            <Label className="text-xs text-gray-500">
-                              Left
-                            </Label>
-                            <div className="grid grid-cols-2 gap-2 mt-1">
-                              <Input placeholder="Systolic" />
-                              <Input placeholder="Diastolic" />
-                            </div>
-                          </div>
-                          <div>
-                            <Label className="text-xs text-gray-500">
-                              Right
-                            </Label>
-                            <div className="grid grid-cols-2 gap-2 mt-1">
-                              <Input placeholder="Systolic" />
-                              <Input placeholder="Diastolic" />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Height & Weight */}
-                      <div className="grid grid-cols-2 gap-8">
-                        <div>
-                          <Label className="text-sm font-medium">Height</Label>
-                          <Input className="mt-1" placeholder="Enter height" />
-                        </div>
-
-                        <div>
-                          <Label className="text-sm font-medium">Weight</Label>
-                          <div className="flex items-center mt-1">
-                            <Input
-                              placeholder="Enter weight"
-                              className="mr-4"
-                            />
-                            <div className="flex items-center space-x-4">
-                              <div className="flex items-center space-x-2">
-                                <RadioGroup defaultValue="actual">
-                                  <div className="flex items-center space-x-2">
-                                    <RadioGroupItem
-                                      value="actual"
-                                      id="weight-actual"
-                                    />
-                                    <Label htmlFor="weight-actual">
-                                      Actual
-                                    </Label>
-                                  </div>
-                                </RadioGroup>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <RadioGroup defaultValue="actual">
-                                  <div className="flex items-center space-x-2">
-                                    <RadioGroupItem
-                                      value="stated"
-                                      id="weight-stated"
-                                    />
-                                    <Label htmlFor="weight-stated">
-                                      Stated
-                                    </Label>
-                                  </div>
-                                </RadioGroup>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Temperature */}
-                      <div>
-                        <div className="flex items-center justify-between">
-                          <Label className="text-sm font-medium">
-                            Temperature
-                          </Label>
-                          <div className="flex items-center space-x-4">
-                            <div className="flex items-center space-x-2">
-                              <RadioGroup defaultValue="oral">
-                                <div className="flex items-center space-x-2">
-                                  <RadioGroupItem value="oral" id="temp-oral" />
-                                  <Label htmlFor="temp-oral">Oral</Label>
-                                </div>
-                              </RadioGroup>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <RadioGroup defaultValue="oral">
-                                <div className="flex items-center space-x-2">
-                                  <RadioGroupItem
-                                    value="rectal"
-                                    id="temp-rectal"
-                                  />
-                                  <Label htmlFor="temp-rectal">Rectal</Label>
-                                </div>
-                              </RadioGroup>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <RadioGroup defaultValue="oral">
-                                <div className="flex items-center space-x-2">
-                                  <RadioGroupItem
-                                    value="axillary"
-                                    id="temp-axillary"
-                                  />
-                                  <Label htmlFor="temp-axillary">
-                                    Axillary
-                                  </Label>
-                                </div>
-                              </RadioGroup>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <RadioGroup defaultValue="oral">
-                                <div className="flex items-center space-x-2">
-                                  <RadioGroupItem
-                                    value="tympanic"
-                                    id="temp-tympanic"
-                                  />
-                                  <Label htmlFor="temp-tympanic">
-                                    Tympanic
-                                  </Label>
-                                </div>
-                              </RadioGroup>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <RadioGroup defaultValue="oral">
-                                <div className="flex items-center space-x-2">
-                                  <RadioGroupItem
-                                    value="not-answered"
-                                    id="temp-not-answered"
-                                  />
-                                  <Label htmlFor="temp-not-answered">
-                                    Not Answered
-                                  </Label>
-                                </div>
-                              </RadioGroup>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center mt-1">
-                          <Input
-                            placeholder="Enter temperature"
-                            className="mr-4"
-                          />
-                          <div className="flex items-center space-x-2">
-                            <Checkbox id="notify-temp" />
-                            <Label htmlFor="notify-temp" className="text-sm">
-                              Notify Physician of Temperature Range of
-                            </Label>
-                            <Input className="w-16" />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Respiratory & Oxygen */}
-                      <div className="grid grid-cols-3 gap-4">
-                        <div>
-                          <Label className="text-sm font-medium">
-                            Respiratory
-                          </Label>
-                          <Input
-                            className="mt-1"
-                            placeholder="Enter respiratory rate"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-sm font-medium">Oxygen</Label>
-                          <Input
-                            className="mt-1"
-                            placeholder="Enter oxygen level"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-sm font-medium">
-                            O2 Saturation
-                          </Label>
-                          <Input
-                            className="mt-1"
-                            placeholder="Enter O2 saturation"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Blood Sugar */}
-                      <div>
-                        <Label className="text-sm font-medium">
-                          Blood Sugar Glucometer
-                        </Label>
-                        <Input
+                          id="height"
+                          type="number"
+                          placeholder="Enter height"
                           className="mt-1"
-                          placeholder="Enter blood sugar level"
+                          value={formData.height}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              height: parseFloat(e.target.value) || 0,
+                            })
+                          }
                         />
                       </div>
-
-                      {/* Checkboxes */}
-                      <div className="space-y-4">
-                        <div className="flex items-center space-x-2">
-                          <Checkbox id="infection" />
-                          <Label htmlFor="infection" className="text-sm">
-                            Patient Developed an infection since last visit.
-                            Explain:
-                          </Label>
-                        </div>
-                        <Input placeholder="Explain infection details" />
-
-                        <div className="flex items-center space-x-2">
-                          <Checkbox id="fall" />
-                          <Label htmlFor="fall" className="text-sm">
-                            Patient has had a fall since last visit (describe
-                            injury if any)
-                          </Label>
-                        </div>
-                        <Input placeholder="Describe fall details" />
-
-                        <div className="flex items-center space-x-2">
-                          <Checkbox id="medical-attention" />
-                          <Label
-                            htmlFor="medical-attention"
-                            className="text-sm"
-                          >
-                            Medical attention was required for fall (describe
-                            medical attention sought for injury)
-                          </Label>
-                        </div>
-                        <Input placeholder="Describe medical attention details" />
-                      </div>
-
-                      {/* Notes */}
                       <div>
-                        <Label className="text-sm font-medium">Notes</Label>
-                        <textarea
-                          className="w-full h-32 mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
-                          placeholder="Enter additional notes here"
+                        <Label htmlFor="weight">Weight (lbs)</Label>
+                        <Input
+                          id="weight"
+                          type="number"
+                          placeholder="Enter weight"
+                          className="mt-1"
+                          value={formData.weight}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              weight: parseFloat(e.target.value) || 0,
+                            })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="age">Age</Label>
+                        <Input
+                          id="age"
+                          type="number"
+                          placeholder="Enter age"
+                          className="mt-1"
+                          value={formData.age}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              age: parseInt(e.target.value) || 0,
+                            })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="bpm">Heart Rate (BPM)</Label>
+                        <Input
+                          id="bpm"
+                          type="number"
+                          placeholder="Enter heart rate"
+                          className="mt-1"
+                          value={formData.bpm}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              bpm: parseInt(e.target.value) || 0,
+                            })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="activity_level">
+                          Blood Pressure (mmHg)
+                        </Label>
+                        <Input
+                          id="activity_level"
+                          type="text"
+                          placeholder="low, moderate, high, extreme"
+                          className="mt-1"
+                          value={formData.activity_level}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              activity_level: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="blood_pressure">
+                          Blood Pressure (mmHg)
+                        </Label>
+                        <Input
+                          id="blood_pressure"
+                          type="text"
+                          placeholder="Enter blood pressure"
+                          className="mt-1"
+                          value={formData.blood_pressure}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              blood_pressure: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="temperature">
+                          Body Temperature (°F)
+                        </Label>
+                        <Input
+                          id="temperature"
+                          type="number"
+                          step="0.1"
+                          placeholder="Enter body temperature"
+                          className="mt-1"
+                          value={formData.temp}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              temp: parseFloat(e.target.value) || 0,
+                            })
+                          }
                         />
                       </div>
                     </div>
-                  )}
+                    <Button
+                      type="submit"
+                      className="bg-teal-600 hover:bg-teal-700"
+                    >
+                      Submit
+                    </Button>
+                  </form>
                 </CardContent>
               </Card>
             </div>

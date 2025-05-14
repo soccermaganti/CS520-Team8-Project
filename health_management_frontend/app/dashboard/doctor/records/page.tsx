@@ -17,7 +17,6 @@ import {
   Download,
   Printer,
   Plus,
-  ArrowLeft,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,11 +27,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Card, CardContent } from "@/components/ui/card"
 import { format } from "date-fns"
 import { createClient } from "@supabase/supabase-js"
+import {supabase} from "../../../supabaseClient"
 
 export default function MedicalRecordsDashboard() {
-    const supabase = createClient("https://niqomrgbdcegxorlifel.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pcW9tcmdiZGNlZ3hvcmxpZmVsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE1NTM4MTcsImV4cCI6MjA1NzEyOTgxN30.6qAVJlUjbd-JnEDMBNPdyavb_-97HZcB7ECvmX7Pfus")
     // const router = useRouter()
-  
+
     const [searchQuery, setSearchQuery] = useState("")
     const [isAddRecordOpen, setIsAddRecordOpen] = useState(false)
     const [records, setRecords] = useState([])
@@ -48,16 +47,16 @@ export default function MedicalRecordsDashboard() {
           console.log('kmfelm123',user?.user_metadata?.first_name);
           setAccountName(user?.user_metadata?.first_name)
           setAccountNameL(user?.user_metadata?.last_name)
-    
-    
-    
+
+
+
         };
-    
-    
+
+
         fetchUser();
-    
+
       }, []);
-  
+
     const [newRecord, setNewRecord] = useState({
       recordId: "",
       name: "",
@@ -66,54 +65,54 @@ export default function MedicalRecordsDashboard() {
       fileType: "pdf" as "pdf" | "png",
       file: null as File | null,
     })
-  
+
     useEffect(() => {
       const fetchData = async () => {
         const { data: { user } } = await supabase.auth.getUser()
         setCurrentUser(user)
-  
+
         const { data, error } = await supabase
           .from("medical_records")
           .select("*")
           .eq("email_doc", user?.email)
-  
+
         if (error) {
           console.error("Fetch error:", error)
           return
         }
-  
+
         const formatted = await Promise.all(data.map(async (record: any, index: number) => {
           let fileUrl = null
           if (record.filePath) {
             const { data: fileData } = supabase.storage.from("test-doc").getPublicUrl(record.filePath)
             fileUrl = fileData?.publicUrl || null
           }
-  
+
           return {
             ...record,
             id: record.id || (index + 1).toString(),
             fileData: fileUrl
           }
         }))
-  
+
         setRecords(formatted)
       }
-  
+
       fetchData()
     }, [])
-  
+
     const handleAddRecord = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newRecord.file) {
           alert("Please upload a file");
           return;
         }
-      
+
         const today = new Date();
         const formattedDate = format(today, "MM/dd/yyyy");
-      
+
         const filePath = `${crypto.randomUUID()}`;
-      
+
         const { data: uploadData, error: uploadError } = await supabase
           .storage
           .from("test-doc")
@@ -122,18 +121,18 @@ export default function MedicalRecordsDashboard() {
             upsert: false,
           });
           console.log('inside upload')
-      
+
         if (uploadError) {
           console.error("Upload error:", uploadError);
           alert("Failed to upload file");
           return;
         }
-    
+
         const fullNameParts = [];
     if (accountName) fullNameParts.push(accountName);
     if (accountNameL) fullNameParts.push(accountNameL);
     const fullName = fullNameParts.join(' ');
-      
+
         const { error: insertError } = await supabase
           .from("medical_records")
         .insert([
@@ -145,20 +144,20 @@ export default function MedicalRecordsDashboard() {
                 date: formattedDate,
                 lastUpdated: formattedDate,
                 updatedBy: newRecord.author,
-                fileType:  "application/pdf",
+                fileType: "application/pdf",
                 fileName: newRecord.file.name,
                 filePath: filePath, // ⬅️ save the path instead of binary
                 email_doc: currentUser?.email,
                 name: newRecord.name
             },
         ]);
-      
+
         if (insertError) {
           console.error("Insert error:", insertError);
           alert("Failed to save metadata");
           return;
         }
-      
+
         setNewRecord({
           recordId: "",
           name: "",
@@ -169,9 +168,9 @@ export default function MedicalRecordsDashboard() {
         });
         setIsAddRecordOpen(false);
         window.location.reload(); // or router.refresh() if using App Router
-    
+
       };
-  
+
     const handleDownload = (record: any) => {
       if (!record.fileData) return
       const a = document.createElement("a")
@@ -218,14 +217,31 @@ export default function MedicalRecordsDashboard() {
       {/* Main content */}
       <div className="flex-1 overflow-auto">
         {/* Header */}
-        <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-          <div className="px-6 py-4 flex items-center">
-            <Link href="/dashboard/patient" className="mr-4">
-              <Button variant="ghost" size="icon">
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            </Link>
-            <h2 className="text-2xl font-bold text-gray-800">Records</h2>
+        <header className="bg-white border-b border-gray-200 p-4 flex items-center justify-between">
+          <div className="relative w-64">
+            <Input
+              placeholder="Search records..."
+              className="pl-10"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+              <Search className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="text-gray-600">{'xjsnckjasn'}</div>
+          <div className="flex items-center space-x-4">
+            <Button variant="ghost" size="icon" className="relative">
+              <Bell className="h-5 w-5" />
+              <span className="absolute top-0 right-0 h-2 w-2 bg-orange-400 rounded-full"></span>
+            </Button>
+            <Button variant="ghost" size="icon" className="relative">
+              <Mail className="h-5 w-5" />
+              <span className="absolute top-0 right-0 h-2 w-2 bg-teal-500 rounded-full"></span>
+            </Button>
+            <Avatar>
+              <AvatarFallback>DR</AvatarFallback>
+            </Avatar>
           </div>
         </header>
 

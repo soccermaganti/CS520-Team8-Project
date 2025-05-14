@@ -163,10 +163,14 @@ const DoctorsPage = () => {
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center space-x-3">
             <Avatar>
-              <AvatarFallback>UI</AvatarFallback>
+              <AvatarFallback>
+                {patientEmail
+                  ? patientEmail.substring(0, 2).toUpperCase()
+                  : "PT"}
+              </AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-medium">{patientName}</p>
+              <p className="font-medium">{patientEmail}</p>
               <p className="text-xs text-gray-500">Patient</p>
             </div>
           </div>

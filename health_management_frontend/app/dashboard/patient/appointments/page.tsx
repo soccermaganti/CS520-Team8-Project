@@ -7,6 +7,7 @@ import {
   Home,
   User,
   Calendar,
+  Clipboard,
   FileText,
   Pill,
   CreditCard,
@@ -183,9 +184,9 @@ export default function AppointmentsPage() {
             <NavItem href="/dashboard/patient/medications" icon={<Pill />}>
               Medications
             </NavItem>
-            {/* <NavItem href="/dashboard/patient/bills" icon={<CreditCard />}>
-              Bills
-            </NavItem> */}
+            <NavItem href="/dashboard/patient/doctors" icon={<Clipboard />}>
+                Doctors
+              </NavItem>
           </div>
           <div className="absolute bottom-0 w-64 border-t border-gray-200">
             <NavItem href="/dashboard/patient/settings" icon={<Settings />}>

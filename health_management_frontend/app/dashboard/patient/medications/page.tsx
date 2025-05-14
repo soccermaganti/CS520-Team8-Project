@@ -9,6 +9,7 @@ import {
   Calendar,
   FileText,
   Pill,
+  Clipboard,
   CreditCard,
   Settings,
   LogOut,
@@ -24,12 +25,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "../../../supabaseClient";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_KEY! // Use this securely server-side
-);
 const MedicationsPage = () => {
+  
   const [patientEmail, setPatientEmail] = useState("");
   useEffect(() => {
     const fetchPatient = async () => {
@@ -132,10 +131,14 @@ const MedicationsPage = () => {
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center space-x-3">
             <Avatar>
-              <AvatarFallback>UI</AvatarFallback>
+              <AvatarFallback>
+                {patientEmail
+                  ? patientEmail.substring(0, 2).toUpperCase()
+                  : "PT"}
+              </AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-medium">{patientName}</p>
+              <p className="font-medium">{patientEmail}</p>
               <p className="text-xs text-gray-500">Patient</p>
             </div>
           </div>
@@ -157,14 +160,13 @@ const MedicationsPage = () => {
             </NavItem>
             <NavItem
               href="/dashboard/patient/medications"
-              icon={<Pill />}
-              active
+              icon={<Pill />} active
             >
               Medications
             </NavItem>
-            {/* <NavItem href="/dashboard/patient/bills" icon={<CreditCard />}>
-                Bills
-              </NavItem> */}
+            <NavItem href="/dashboard/patient/doctors" icon={<Clipboard />}>
+                Doctors
+              </NavItem>            
           </div>
           <div className="absolute bottom-0 w-64 border-t border-gray-200">
             <NavItem href="/dashboard/patient/settings" icon={<Settings />}>

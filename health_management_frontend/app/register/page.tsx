@@ -20,14 +20,14 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "../supabaseClient";
-// import localHost from "../localHost";
-// import getCookie from "../getCookie";
-import { Label } from "@/components/ui/label"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { CalendarIcon } from "lucide-react"
-import { format } from "date-fns"
-import { cn } from "@/lib/utils"
+import localHost from "../localHost";
+import getCookie from "../getCookie";
+import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 const formSchema = z
   .object({
@@ -43,25 +43,29 @@ const formSchema = z
     phoneNumber: z.string().min(10, {
       message: "Phone number must be at least 10 digits.",
     }),
+    specialty: z.string().min(2, {
+      message: "Specialty must be at least 2 characters.",
+    }).optional().nullable(),
     dateOfBirth: z
-    .date({
-    })
-    .nullable()
-    .optional()
-    .refine(
-      (date) => {
-        if (date === undefined || date === null) return true;
-        return date <= new Date();
-      },
-      {
-        message: "Date of birth cannot be in the future",
-      }
-    ),
+      .date({
+        required_error: "Date of birth is required.",
+      })
+      .nullable()
+      .optional()
+      .refine(
+        (date) => {
+          // Ensure the date is not in the future
+          return date <= new Date();
+        },
+        {
+          message: "Date of birth cannot be in the future",
+        }
+      ),
     password: z.string().min(8, {
       message: "Password must be at least 8 characters.",
     }),
     confirmPassword: z.string(),
-    dob: z.date().optional(),
+    // dob: z.date().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
@@ -82,6 +86,7 @@ export default function RegisterPage() {
       password: "",
       confirmPassword: "",
       dateOfBirth: undefined,
+      specialty: undefined
     },
   });
 
@@ -97,7 +102,9 @@ export default function RegisterPage() {
             phone_number: values.phoneNumber,
             date_of_birth: values.dateOfBirth ? values.dateOfBirth.toISOString() : null,
             user_type: userType, // doctor or patient
-            dob: values.dateOfBirth ? values.dateOfBirth.toISOString() : null,
+            specialty: values.specialty,
+            // dob: values.dateOfBirth,
+            dob: "2025-5-7",
           },
         },
       });
@@ -110,7 +117,54 @@ export default function RegisterPage() {
         });
         return;
       }
-      
+      if (userType === "patient") {
+        const response = await fetch(`${localHost}/create_${userType}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie("csrftoken") || "",
+          },
+          body: JSON.stringify({
+            name: `${values.firstName} ${values.lastName}`,
+            email: values.email,
+            phone_num: values.phoneNumber,
+            dob: "2025-5-7"
+          }),
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          toast({
+            title: "Registration failed",
+            description: errorData.message,
+            variant: "destructive",
+          });
+          return;
+        }
+      } else {
+        const response = await fetch(`${localHost}/create_${userType}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie("csrftoken") || "",
+          },
+          body: JSON.stringify({
+            specialty: values.specialty,
+            name: `Dr. ${values.firstName} ${values.lastName}`,
+            email: values.email,
+            phone_num: values.phoneNumber,
+          }),
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          toast({
+            title: "Registration failed",
+            description: errorData.message,
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
       toast({
         title: "Registration successful",
         description: "Please check your email to confirm your account.",
@@ -223,6 +277,23 @@ export default function RegisterPage() {
                   )}
                 />
               </div>
+              {userType == "doctor" && (
+                <div className="grid gap-4">
+                  <FormField
+                    control={form.control}
+                    name="specialty"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Specialty*</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Surgeon" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
 
               {userType === "patient" && (
                 <div className="grid gap-4">
@@ -263,6 +334,7 @@ export default function RegisterPage() {
                   />
                 </div>
               )}
+
 
               <div className="grid gap-4 md:grid-cols-2">
                 <FormField

@@ -1,8 +1,8 @@
-"use client"
-"use client"
+"use client";
+"use client";
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
+import { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   Bell,
   Calendar,
@@ -18,13 +18,19 @@ import {
   Clipboard,
   MessageSquare,
   Home,
-} from "lucide-react"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
+} from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
 
-import { createClient } from '@supabase/supabase-js'
-import { User as SupabaseUser } from '@supabase/supabase-js'
+import { createClient } from "@supabase/supabase-js";
+import { User as SupabaseUser } from "@supabase/supabase-js";
 import { supabase } from "../../supabaseClient";
 
 interface Appointment {
@@ -66,171 +72,161 @@ export default function PatientDashboard() {
       month: "long",
       day: "numeric",
       year: "numeric",
-    }),
-  )
-  const [appointments, setAppointments] = useState<Appointment[]>([])
+    })
+  );
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+
   const [currentUser, setCurrentUser] = useState<SupabaseUser | null>(null);
+  useEffect(() => {
+    const fetchUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setCurrentUser(user);
+    };
+    fetchUser();
+  },[]);
+
 
   // Mock data for the patient
   // TODO: Replace with actual data fetching logic
-  // const [patient, setPatient] = useState({name: "", email: "", phone_num: ""})
-  const [patient, setPatient] = useState<{ name: string; email: string; phone_num: string } | null>(null);
+  const [patient, setPatient] = useState({
+    name: "",
+    email: "",
+    phone_num: "",
+  });
   const [patientInfo, setPatientInfo] = useState({
     age: 0,
     blood_type: "",
-    blood_pressure:"",
-    bpm:0,
+    blood_pressure: "",
+    bpm: 0,
     height: "",
     weight: "",
-    temp:0,
-  })
-
+    temp: 0,
+  });
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        setCurrentUser(user);
-      } catch (err) {
-        console.error("Error fetching user:", err);
-        // setError("Failed to fetch user data");
-      }
-    };
-  
-    fetchUser();
-  }, []);
-
-  useEffect(() => {
-    // const currentPatientId = localStorage.getItem("user") || "{}"
-    // const parsedID = JSON.parse(currentPatientId)
-
-    
-    // const fetchUser = async () => {
-    //   const { data: { user } } = await supabase.auth.getUser();
-    //   setCurrentUser(user);
-    // };
-
-    const fetchAppointments = async () => {
-      if (currentUser?.email) {
-        const { data, error } = await supabase
-          .from("Appointment")
-          .select("*")
-          .eq("patient_email", currentUser.email)
-          .order("appt_date", { ascending: true })
-
-        if (!error) setAppointments(data)
-      }
-    }
-
+    // const currentPatientId = localStorage.getItem("user") || "{}";
+    // const parsedID = JSON.parse(currentPatientId);
+    // console.log("Parsed ID:", parsedID)
     const fetchPatientInfo = async () => {
       const { data, error } = await supabase
         .from("Info")
         .select("*")
         .eq("email", currentUser?.email)
-        .single()
+        .single();
 
       if (error) {
-        console.error("Error fetching patient EHR:", error)
+        console.error("Error fetching patient EHR:", error);
       } else {
         // Set the patient data in state or use it directly
         // console.log("Patient EHR data:", data)
-        setPatientInfo(data)
-      }
-    }
-
-    const fetchPatient = async () => {
-      if (!currentUser?.email) {
-        console.log("No user email available yet");
-        return;
-      }
-    
-      try {
-        const { data, error } = await supabase
-          .from("Patient")
-          .select("name, email, phone_num")
-          .eq("email", currentUser.email)
-          .single();
-    
-        if (error) {
-          console.error("Error fetching patient:", error.message);
-          return;
-        }
-    
-        if (!data) {
-          console.log("No patient data found for email:", currentUser.email);
-          return;
-        }
-    
-        setPatient(data);
-      } catch (err) {
-        console.error("Unexpected error fetching patient:", err);
+        setPatientInfo(data);
       }
     };
-    
-    fetchAppointments()
-    fetchPatientInfo()
-    fetchPatient()
-  }, [currentUser])
 
-const patientData = {
-  name: patient?.name || "Patient",
-  email: patient?.email || "",
-  phone_num: patient?.phone_num || "",
-  age: patientInfo.age,
-  bloodType: patientInfo.blood_type,
-  nextAppointment: appointments[0],
-};
+    fetchPatientInfo();
+  }, [currentUser]);
+  useEffect(() => {
+    // const currentPatientId = localStorage.getItem("user") || "{}";
+    // const parsedID = JSON.parse(currentPatientId);
+    // console.log("Parsed ID:", parsedID)
+    const fetchPatient = async () => {
+      const { data, error } = await supabase
+        .from("Patient")
+        .select("name, email, phone_num")
+        .eq("email", currentUser?.email)
+        .single();
+
+      if (error) {
+        console.error("Error fetching patient:", error);
+      } else {
+        // Set the patient data in state or use it directly
+        console.log("Patient data:", data);
+        setPatient(data);
+      }
+    };
+    fetchPatient();
+  }, [currentUser]);
+
+  useEffect(() => {
+    // const currentPatientId = localStorage.getItem("user") || "{}";
+    // const parsedID = JSON.parse(currentPatientId);
+    const fetchAppointments = async () => {
+      const { data, error } = await supabase
+        .from("Appointment")
+        .select("*")
+        .eq("patient_email", currentUser?.email)
+        .order("appt_date", { ascending: true });
+
+      if (!error) {
+        console.log("Appointments data:", data);
+        setAppointments(data);
+      }
+    };
+
+    fetchAppointments();
+  }, [currentUser]);
+
+  const patientData = {
+    name: patient.name,
+    email: patient.email,
+    phone_num: patient.phone_num,
+    age: patientInfo.age,
+    bloodType: patientInfo.blood_type,
+    nextAppointment: appointments[0],
+    // pid: patient.pid,
+  };
   // console.log(appointments)
 
   // Mock data for appointments
   // const appointments = [
-  //   {
-  //     type: "Check-up",
-  //     date: "May 28, 2023",
-  //     time: "10:30 AM",
-  //     doctor: "Dr. USER2",
-  //     location: "Main Hospital, Room 302",
-  //   },
-  //   {
-  //     type: "Blood Test",
-  //     date: "June 5, 2023",
-  //     time: "9:00 AM",
-  //     doctor: "Dr. USER3",
-  //     location: "Lab Center, Floor 1",
-  //   },
-  //   {
-  //     type: "Physical Therapy",
-  //     date: "June 12, 2023",
-  //     time: "2:15 PM",
-  //     doctor: "Dr. USER4",
-  //     location: "Rehabilitation Center",
-  //   },
+  //		{
+  //			type: "Check-up",
+  //			date: "May 28, 2023",
+  //			time: "10:30 AM",
+  //			doctor: "Dr. USER2",
+  //			location: "Main Hospital, Room 302",
+  //		},
+  //		{
+  //			type: "Blood Test",
+  //			date: "June 5, 2023",
+  //			time: "9:00 AM",
+  //			doctor: "Dr. USER3",
+  //			location: "Lab Center, Floor 1",
+  //		},
+  //		{
+  //			type: "Physical Therapy",
+  //			date: "June 12, 2023",
+  //			time: "2:15 PM",
+  //			doctor: "Dr. USER4",
+  //			location: "Rehabilitation Center",
+  //		},
   // ]
   // const appointments = [
-  //   {
-  //     type: "Check-up",
-  //     date: "May 28, 2023",
-  //     time: "10:30 AM",
-  //     doctor: "Dr. USER2",
-  //     location: "Main Hospital, Room 302",
-  //   },
-  //   {
-  //     type: "Blood Test",
-  //     date: "June 5, 2023",
-  //     time: "9:00 AM",
-  //     doctor: "Dr. USER3",
-  //     location: "Lab Center, Floor 1",
-  //   },
-  //   {
-  //     type: "Physical Therapy",
-  //     date: "June 12, 2023",
-  //     time: "2:15 PM",
-  //     doctor: "Dr. USER4",
-  //     location: "Rehabilitation Center",
-  //   },
+  //		{
+  //			type: "Check-up",
+  //			date: "May 28, 2023",
+  //			time: "10:30 AM",
+  //			doctor: "Dr. USER2",
+  //			location: "Main Hospital, Room 302",
+  //		},
+  //		{
+  //			type: "Blood Test",
+  //			date: "June 5, 2023",
+  //			time: "9:00 AM",
+  //			doctor: "Dr. USER3",
+  //			location: "Lab Center, Floor 1",
+  //		},
+  //		{
+  //			type: "Physical Therapy",
+  //			date: "June 12, 2023",
+  //			time: "2:15 PM",
+  //			doctor: "Dr. USER4",
+  //			location: "Rehabilitation Center",
+  //		},
   // ]
 
   // Health metrics data
-  // TODO: Replace with actual data fetching logic
   const healthMetrics = {
     age: `${patientInfo.age} yrs old`,
     heartRate: patientInfo.bpm,
@@ -238,7 +234,7 @@ const patientData = {
     height: `${patientInfo.height} ft`,
     weight: `${patientInfo.weight} lbs`,
     temperature: `${patientInfo.temp} °F`,
-  }
+  };
 
   // Quick access tiles
   const quickAccessTiles = [
@@ -259,25 +255,46 @@ const patientData = {
       icon: <FileText className="h-6 w-6" />,
       link: "/dashboard/patient/records",
       color: "bg-purple-100",
-    }
-  ]
+    },
+  ];
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      if (currentUser?.email) {
+        const { data, error } = await supabase
+          .from("Appointment")
+          .select("*")
+          .eq("patient_email", currentUser.email)
+          .order("appt_date", { ascending: true });
+
+        if (!error) setAppointments(data);
+      }
+    };
+    fetchAppointments();
+  }, [currentUser]);
 
   return (
     <div className="flex min-h-screen bg-gray-100">
       {/* Sidebar */}
       <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
         <div className="p-6 border-b border-gray-200">
-          <h1 className="text-2xl font-bold text-teal-600">MedC</h1>
+          <h1 className="text-2xl font-bold text-teal-600">CentraHealth</h1>
         </div>
 
         {/* User Profile in Sidebar */}
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center space-x-3">
             <Avatar>
-              <AvatarFallback>U1</AvatarFallback>
+              <AvatarFallback>
+                {currentUser?.email
+                  ? currentUser.email.substring(0, 2).toUpperCase()
+                  : "PT"}
+              </AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-medium">{currentUser?.email ? currentUser.email : "U"}</p>
+              <p className="font-medium">
+                {currentUser?.email ? currentUser.email : "U"}
+              </p>
               <p className="text-xs text-gray-500">Patient</p>
             </div>
           </div>
@@ -298,12 +315,15 @@ const patientData = {
             <NavItem href="/dashboard/patient/records" icon={<FileText />}>
               Records
             </NavItem>
-            <NavItem href="/dashboard/patient/medications" icon={<Pill />}>
+            <NavItem
+              href="/dashboard/patient/medications"
+              icon={<Pill />}
+            >
               Medications
             </NavItem>
-            {/* <NavItem href="/dashboard/patient/bills" icon={<CreditCard />}>
-              Bills
-            </NavItem> */}
+            <NavItem href="/dashboard/patient/doctors" icon={<Clipboard />}>
+                 Doctors
+               </NavItem>
           </div>
           <div className="absolute bottom-0 w-64 border-t border-gray-200">
             <NavItem href="/dashboard/patient/settings" icon={<Settings />}>
@@ -337,7 +357,9 @@ const patientData = {
         {/* Main content */}
         <main className="flex-1 p-6 overflow-auto">
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">Welcome back, {patientData.name}</h2>
+            <h2 className="text-2xl font-bold text-gray-800">
+              Welcome back, {patientData.name}
+            </h2>
           </div>
 
           {/* Top row */}
@@ -349,15 +371,27 @@ const patientData = {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col md:flex-row gap-6">
-                  <div className="relative w-full md:w-1/2 aspect-square max-w-[240px] mx-auto md:mx-0">
+                  {/* <div className="relative w-full md:w-1/2 aspect-square max-w-[240px] mx-auto md:mx-0">
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="text-center">
                         <p className="text-5xl font-bold text-teal-600">87%</p>
-                        <p className="text-sm text-gray-500 mt-1">Overall Health</p>
+                        <p className="text-sm text-gray-500 mt-1">
+                          Overall Health
+                        </p>
                       </div>
                     </div>
-                    <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
-                      <circle cx="50" cy="50" r="45" fill="none" stroke="#e2e8f0" strokeWidth="10" />
+                    <svg
+                      viewBox="0 0 100 100"
+                      className="w-full h-full transform -rotate-90"
+                    >
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r="45"
+                        fill="none"
+                        stroke="#e2e8f0"
+                        strokeWidth="10"
+                      />
                       <circle
                         cx="50"
                         cy="50"
@@ -369,9 +403,9 @@ const patientData = {
                         strokeDashoffset="37"
                       />
                     </svg>
-                  </div>
+                  </div> */}
                   <div className="flex-1 grid grid-cols-2 gap-4">
-                  {/* <MetricItem
+                    {/* <MetricItem
                       label="Age"
                       value={`${healthMetrics.age}`}
                       icon={<Activity className="h-4 w-4 text-green-500" />}
@@ -406,8 +440,8 @@ const patientData = {
               </CardContent>
             </Card>
 
-             {/* Upcoming Appointments */}
-             <Card>
+            {/* Upcoming Appointments */}
+            <Card>
               <CardHeader className="pb-2">
                 <CardTitle>Upcoming Appointments</CardTitle>
               </CardHeader>
@@ -435,23 +469,27 @@ const patientData = {
                 ))}
               </CardContent>
               <CardFooter>
-              <Link href="/dashboard/patient/appointments" className="w-full">
-                <Button variant="outline" className="w-full">
-                  View All Appointments
-                </Button>
-              </Link>
+                <Link href="/dashboard/patient/appointments" className="w-full">
+                  <Button variant="outline" className="w-full">
+                    View All Appointments
+                  </Button>
+                </Link>
               </CardFooter>
             </Card>
           </div>
 
           {/* Quick Access Tiles */}
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">Quick Access</h3>
+          <h3 className="text-xl font-semibold text-gray-800 mb-4">
+            Quick Access
+          </h3>
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             {quickAccessTiles.map((tile, index) => (
               <Link href={tile.link} key={index}>
                 <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
                   <CardContent className="p-6 flex flex-col items-center text-center">
-                    <div className={`${tile.color} p-3 rounded-lg mb-3`}>{tile.icon}</div>
+                    <div className={`${tile.color} p-3 rounded-lg mb-3`}>
+                      {tile.icon}
+                    </div>
                     <h3 className="font-medium">{tile.title}</h3>
                   </CardContent>
                 </Card>
@@ -460,7 +498,9 @@ const patientData = {
           </div>
 
           {/* Recent Activity */}
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">Recent Activity</h3>
+          <h3 className="text-xl font-semibold text-gray-800 mb-4">
+            Recent Activity
+          </h3>
           <Card>
             <CardContent className="p-6">
               <div className="space-y-4">
@@ -504,12 +544,12 @@ const patientData = {
         {/* Footer */}
         <footer className="bg-white border-t border-gray-200 py-4 px-6">
           <p className="text-gray-600 text-sm text-center">
-            © 2023 MedC Hospital Management System. All rights reserved.
+            © 2025 CentraHealth Hospital Management System. All rights reserved.
           </p>
         </footer>
       </div>
     </div>
-  )
+  );
 }
 
 // Helper components
@@ -526,7 +566,7 @@ function NavItem({ href, icon, children, active = false }: NavItemProps) {
       <span className="mr-3">{icon}</span>
       {children}
     </Link>
-  )
+  );
 }
 
 function MetricItem({ label, value, icon }: MetricItemProps) {
@@ -538,10 +578,17 @@ function MetricItem({ label, value, icon }: MetricItemProps) {
         <p className="text-lg font-semibold">{value}</p>
       </div>
     </div>
-  )
+  );
 }
 
-function ActivityItem({ title, description, time, icon, iconBg, iconColor }: ActivityItemProps) {
+function ActivityItem({
+  title,
+  description,
+  time,
+  icon,
+  iconBg,
+  iconColor,
+}: ActivityItemProps) {
   return (
     <div className="flex items-start space-x-3">
       <div className={`p-2 rounded-lg ${iconBg}`}>
@@ -553,5 +600,5 @@ function ActivityItem({ title, description, time, icon, iconBg, iconColor }: Act
         <p className="text-xs text-gray-400">{time}</p>
       </div>
     </div>
-  )
+  );
 }
