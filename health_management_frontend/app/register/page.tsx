@@ -29,11 +29,6 @@ import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 
-export default function RegisterPage() {
-  const router = useRouter();
-  const [userType, setUserType] = useState("patient");
-  
-  
 const formSchema = z
   .object({
     firstName: z.string().min(2, {
@@ -48,43 +43,33 @@ const formSchema = z
     phoneNumber: z.string().min(10, {
       message: "Phone number must be at least 10 digits.",
     }),
-    dob: z.string().optional(),
-    speciality: z.string().optional(),
+    specialty: z.string().min(2, {
+      message: "Specialty must be at least 2 characters.",
+    }).optional().nullable(),
+    dateOfBirth: z
+      .date({
+        required_error: "Date of birth is required.",
+      })
+      .nullable()
+      .optional()
+      .refine(
+        (date) => {
+          // Ensure the date is not in the future
+          return date <= new Date()
+        },
+        {
+          message: "Date of birth cannot be in the future",
+        }),
     password: z.string().min(8, {
       message: "Password must be at least 8 characters.",
     }),
     confirmPassword: z.string(),
-    dob: z.date().optional(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
-  })
-  .refine(
-      (data) => {
-        if (userType === "patient") {
-          return !!data.dob;
-        }
-        return true;
-      },
-      {
-        message: "Date of birth is required for patients",
-        path: ["dob"],
-      }
-    )
-    .refine(
-      (data) => {
-        if (userType === "doctor") {
-          return !!data.speciality;
-        }
-        return true;
-      },
-      {
-        message: "Speciality is required for doctors",
-        path: ["speciality"],
-      }
-    );
-
+    // dob: z.date().optional(),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: "Passwords don't match",
+      path: ["confirmPassword"],
+    });
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -99,8 +84,8 @@ export default function RegisterPage() {
       phoneNumber: "",
       password: "",
       confirmPassword: "",
-      dob: "",
-      speciality: "",
+      dateOfBirth: undefined,
+      specialty: undefined
     },
   });
 
@@ -114,16 +99,15 @@ export default function RegisterPage() {
             first_name: values.firstName,
             last_name: values.lastName,
             phone_number: values.phoneNumber,
-            
+            date_of_birth: values.dateOfBirth ? values.dateOfBirth.toISOString() : null,
             user_type: userType, // doctor or patient
+            specialty: values.specialty,
             // dob: values.dateOfBirth,
             dob: "2025-5-7",
           },
         },
-      }
-                                                        
-    
-      
+      });
+
       if (error) {
         toast({
           title: "Registration failed",
@@ -140,11 +124,9 @@ export default function RegisterPage() {
             "X-CSRFToken": getCookie("csrftoken") || "",
           },
           body: JSON.stringify({
-            // pid: String(data.user.id),
             name: `${values.firstName} ${values.lastName}`,
             email: values.email,
             phone_num: values.phoneNumber,
-            // dob: values.dateOfBirth,
             dob: "2025-5-7"
           }),
         });
@@ -166,13 +148,10 @@ export default function RegisterPage() {
             "X-CSRFToken": getCookie("csrftoken") || "",
           },
           body: JSON.stringify({
-            specialty: "filler",
-            name: `${values.firstName} ${values.lastName}`,
+            specialty: values.specialty,
+            name: `Dr. ${values.firstName} ${values.lastName}`,
             email: values.email,
             phone_num: values.phoneNumber,
-            // // dob: values.dob,
-            // dob: "2025-5-7"
-
           }),
         });
         if (!response.ok) {
@@ -298,37 +277,63 @@ export default function RegisterPage() {
                   )}
                 />
               </div>
-
-              {userType === "patient" ? (
+              {userType == "doctor" && (
+                <div className="grid gap-4">
                 <FormField
                   control={form.control}
-                  name="dob"
+                  name="specialty"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Date of Birth* (YYYY-MM-DD)</FormLabel>
+                      <FormLabel>Specialty*</FormLabel>
                       <FormControl>
-                        <Input placeholder="1990-01-01" {...field} />
+                        <Input placeholder="Surgeon" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              ) : (
-                <FormField
-                  control={form.control}
-                  name="speciality"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Medical Speciality*</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., Cardiology, Pediatrics, etc." {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                </div>
               )}
 
+              {userType === "patient" && (
+                <div className="grid gap-4">
+                  <FormField
+                    control={form.control}
+                    name="dateOfBirth"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Date of Birth*</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "w-full pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground",
+                                )}
+                              >
+                                {field.value ? format(field.value, "PPP") : <span>Select your date of birth</span>}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              disabled={(date) => date > new Date()}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
 
               <div className="grid gap-4 md:grid-cols-2">
                 <FormField

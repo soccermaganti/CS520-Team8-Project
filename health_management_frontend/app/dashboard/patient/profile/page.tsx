@@ -28,16 +28,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "../../../supabaseClient";
 
 const PatientProfilePage = () => {
-  const [currentUser, setCurrentUser] = useState(null);
-    useEffect(() => {
-      const fetchUser = async () => {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        setCurrentUser(user);
-      };
-      fetchUser();
-    },[]);
+  const [patientEmail, setPatientEmail] = useState("");
+  useEffect(() => {
+    const fetchPatient = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        console.error("Error fetching patient");
+      } else {
+        // Set the patient data in state or use it directly
+        console.log("Patient data:", user);
+        setPatientEmail(user.email.toString());
+      }
+    };
+    fetchPatient();
+  }, []);
 
   const [patient, setPatient] = useState({
     name: "",
@@ -46,14 +50,14 @@ const PatientProfilePage = () => {
   });
   const [patientAge, setPatientAge] = useState(0);
   useEffect(() => {
-    const currentPatientId = localStorage.getItem("user") || "{}";
-    const parsedID = JSON.parse(currentPatientId);
+    // const currentPatientId = localStorage.getItem("user") || "{}";
+    // const parsedID = JSON.parse(currentPatientId);
     // console.log("Parsed ID:", parsedID)
     const fetchPatient = async () => {
       const { data, error } = await supabase
         .from("Patient")
         .select("*")
-        .eq("email", parsedID)
+        .eq("email", patientEmail)
         .single();
 
       if (error) {
@@ -65,16 +69,16 @@ const PatientProfilePage = () => {
       }
     };
     fetchPatient();
-  }, []);
+  }, [patientEmail]);
   useEffect(() => {
-    const currentPatientId = localStorage.getItem("user") || "{}";
-    const parsedID = JSON.parse(currentPatientId);
+    // const currentPatientId = localStorage.getItem("user") || "{}";
+    // const parsedID = JSON.parse(currentPatientId);
     // console.log("Parsed ID:", parsedID)
     const fetchPatient = async () => {
       const { data, error } = await supabase
         .from("Info")
         .select("age")
-        .eq("email", parsedID)
+        .eq("email", patientEmail)
         .single();
 
       if (error) {
@@ -86,7 +90,7 @@ const PatientProfilePage = () => {
       }
     };
     fetchPatient();
-  }, []);
+  }, [patientEmail]);
 
   const patientData = {
     name: patient.name,
@@ -109,8 +113,8 @@ const PatientProfilePage = () => {
           <div className="flex items-center space-x-3">
             <Avatar>
               <AvatarFallback>
-                {currentUser?.email
-                  ? currentUser.email.substring(0, 2).toUpperCase()
+                {patientEmail
+                  ? patientEmail.substring(0, 2).toUpperCase()
                   : "PT"}
               </AvatarFallback>
             </Avatar>
@@ -165,7 +169,7 @@ const PatientProfilePage = () => {
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </Link>
-            <h2 className="text-2xl font-bold text-gray-800">Appointments</h2>
+            <h2 className="text-2xl font-bold text-gray-800">Profile</h2>
           </div>
         </header>
 
