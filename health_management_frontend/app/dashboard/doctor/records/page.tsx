@@ -137,7 +137,7 @@ export default function MedicalRecordsDashboard() {
           .from("medical_records")
         .insert([
             {
-                email_doc: newRecord.recordId,
+                email: newRecord.recordId,
                 name_doc: fullName,
                 noteType: newRecord.noteType,
                 author: newRecord.author,
@@ -147,7 +147,7 @@ export default function MedicalRecordsDashboard() {
                 fileType:  "application/pdf",
                 fileName: newRecord.file.name,
                 filePath: filePath, // ⬅️ save the path instead of binary
-                email: currentUser?.email,
+                email_doc: currentUser?.email,
                 name: newRecord.name
             },
         ]);
