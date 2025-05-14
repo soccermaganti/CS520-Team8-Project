@@ -97,8 +97,7 @@ export default function RegisterPage() {
             phone_number: values.phoneNumber,
             date_of_birth: values.dateOfBirth ? values.dateOfBirth.toISOString() : null,
             user_type: userType, // doctor or patient
-            // dob: values.dateOfBirth,
-            dob: "2025-5-7",
+            dob: values.dateOfBirth ? values.dateOfBirth.toISOString() : null,
           },
         },
       });
