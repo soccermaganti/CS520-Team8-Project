@@ -112,7 +112,7 @@ export default function PatientDashboard() {
       const { data, error } = await supabase
         .from("Info")
         .select("*")
-        .eq("email", currentUser)
+        .eq("email", currentUser.email)
         .single();
 
       if (error) {

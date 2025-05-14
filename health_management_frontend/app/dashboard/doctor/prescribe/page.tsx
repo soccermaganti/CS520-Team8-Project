@@ -190,7 +190,7 @@ const PrescribePage = () => {
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </Link>
-            <h2 className="text-2xl font-bold text-gray-800">Patients</h2>
+            <h2 className="text-2xl font-bold text-gray-800">Prescribe</h2>
           </div>
         </header>
 

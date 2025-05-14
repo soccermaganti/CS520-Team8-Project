@@ -1,31 +1,35 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { useEffect, useState } from "react"
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   Home,
   Calendar,
   User,
+  Pill,
+  FileText,
   LogOut,
   Clock,
-} from "lucide-react"
+} from "lucide-react";
 
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from "@supabase/supabase-js";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { supabase } from "../../../supabaseClient";
 
 export default function DoctorAppointmentsPage() {
-  const [appointments, setAppointments] = useState([])
+  const [appointments, setAppointments] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     const fetchUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       setCurrentUser(user);
     };
 
@@ -37,7 +41,8 @@ export default function DoctorAppointmentsPage() {
       if (currentUser?.email) {
         const { data, error } = await supabase
           .from("Appointment")
-          .select(`
+          .select(
+            `
             appt_id,
             appt_date,
             appt_time,
@@ -47,9 +52,10 @@ export default function DoctorAppointmentsPage() {
               email,
               name
             )
-          `)
+          `
+          )
           .eq("doctor_email", currentUser.email)
-          .order("appt_date", { ascending: true })
+          .order("appt_date", { ascending: true });
 
         if (!error) {
           setAppointments(data);
@@ -67,13 +73,17 @@ export default function DoctorAppointmentsPage() {
       {/* Sidebar */}
       <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
         <div className="p-6 border-b border-gray-200">
-          <h1 className="text-2xl font-bold text-teal-600">MedC</h1>
+          <h1 className="text-2xl font-bold text-teal-600">CentraHealth</h1>
         </div>
 
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center space-x-3">
             <Avatar>
-              <AvatarFallback>{currentUser?.email ? currentUser.email.substring(0, 2).toUpperCase() : "DR"}</AvatarFallback>
+              <AvatarFallback>
+                {currentUser?.email
+                  ? currentUser.email.substring(0, 2).toUpperCase()
+                  : "DR"}
+              </AvatarFallback>
             </Avatar>
             <div>
               <p className="font-medium">{currentUser?.email || "Doctor"}</p>
@@ -85,16 +95,23 @@ export default function DoctorAppointmentsPage() {
         <nav className="flex-1 pt-4">
           <div className="space-y-1">
             <NavItem href="/dashboard/doctor" icon={<Home />}>
-              Dashboard
+              Check-Up Form
             </NavItem>
-            <NavItem href="/dashboard/doctor/profile" icon={<User />}>
-              Profile
-            </NavItem>
-            <NavItem href="/dashboard/doctor/appointments" icon={<Calendar />} active>
+            <NavItem
+              href="/dashboard/doctor/appointments"
+              icon={<Calendar />}
+              active
+            >
               Appointments
             </NavItem>
             <NavItem href="/dashboard/doctor/patients" icon={<Calendar />}>
               Patients
+            </NavItem>
+            <NavItem href="/dashboard/doctor/records" icon={<FileText />}>
+              Records
+            </NavItem>
+            <NavItem href="/dashboard/doctor/prescribe" icon={<Pill />}>
+              Prescribe
             </NavItem>
           </div>
           <div className="absolute bottom-0 w-64 border-t border-gray-200">
@@ -114,7 +131,9 @@ export default function DoctorAppointmentsPage() {
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </Link>
-            <h2 className="text-2xl font-bold text-gray-800">My Appointments</h2>
+            <h2 className="text-2xl font-bold text-gray-800">
+              My Appointments
+            </h2>
           </div>
         </header>
 
@@ -128,16 +147,24 @@ export default function DoctorAppointmentsPage() {
                 <p className="text-gray-500">No appointments scheduled yet.</p>
               ) : (
                 appointments.map((appt) => (
-                  <div key={appt.appt_id} className="border-b pb-3 last:border-0 last:pb-0">
+                  <div
+                    key={appt.appt_id}
+                    className="border-b pb-3 last:border-0 last:pb-0"
+                  >
                     <p className="font-medium">{appt.appt_type}</p>
                     <p className="text-sm text-gray-500">
-                      Patient: {appt.Patient?.full_name || "N/A"} ({appt.Patient?.email || "N/A"})
+                      Patient: {appt.Patient?.full_name || "N/A"} (
+                      {appt.Patient?.email || "N/A"})
                     </p>
                     <p className="text-sm text-gray-500 flex items-center gap-1">
                       <Calendar className="h-4 w-4" /> {appt.appt_date}
                       <Clock className="h-4 w-4 ml-4" /> {appt.appt_time || "—"}
                     </p>
-                    {appt.link && <p className="text-sm text-gray-400 mt-1">Notes: {appt.link}</p>}
+                    {appt.link && (
+                      <p className="text-sm text-gray-400 mt-1">
+                        Notes: {appt.link}
+                      </p>
+                    )}
                   </div>
                 ))
               )}
@@ -147,12 +174,12 @@ export default function DoctorAppointmentsPage() {
 
         <footer className="bg-white border-t border-gray-200 py-4 px-6">
           <p className="text-gray-600 text-sm text-center">
-            © 2025 MedC Hospital Management System. All rights reserved.
+            © 2025 CentraHealth Hospital Management System. All rights reserved.
           </p>
         </footer>
       </div>
     </div>
-  )
+  );
 }
 
 function NavItem({ href, icon, children, active = false }) {
@@ -168,5 +195,5 @@ function NavItem({ href, icon, children, active = false }) {
       <span className="mr-3">{icon}</span>
       {children}
     </Link>
-  )
+  );
 }
